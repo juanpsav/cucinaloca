@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Add OPTIONS method for CORS preflight
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -113,11 +113,11 @@ function extractFromJsonLd($: cheerio.CheerioAPI): Recipe | null {
         }
         // Handle nested structures
         if (item['@graph']) {
-          const recipe = item['@graph'].find((node: any) => node['@type'] === 'Recipe');
+          const recipe = item['@graph'].find((node: Record<string, unknown>) => node['@type'] === 'Recipe');
           if (recipe) return parseJsonLdRecipe(recipe);
         }
       }
-    } catch (e) {
+    } catch {
       continue; // Skip invalid JSON
     }
   }
@@ -125,19 +125,37 @@ function extractFromJsonLd($: cheerio.CheerioAPI): Recipe | null {
   return null;
 }
 
-function parseJsonLdRecipe(data: any): Recipe {
+function parseJsonLdRecipe(data: Record<string, unknown>): Recipe {
+  const name = typeof data.name === 'string' ? data.name : 'Untitled Recipe';
+  const description = typeof data.description === 'string' ? data.description : undefined;
+  const prepTime = typeof data.prepTime === 'string' ? formatTime(data.prepTime) : undefined;
+  const cookTime = typeof data.cookTime === 'string' ? formatTime(data.cookTime) : undefined;
+  const totalTime = typeof data.totalTime === 'string' ? formatTime(data.totalTime) : undefined;
+  const servings = data.recipeYield ? String(data.recipeYield) : undefined;
+  
+  const ingredients = Array.isArray(data.recipeIngredient) 
+    ? data.recipeIngredient.filter((item): item is string => typeof item === 'string')
+    : typeof data.recipeIngredient === 'string' ? [data.recipeIngredient] : [];
+  
+  const instructions = parseInstructions(data.recipeInstructions);
+  
+  let image: string | undefined;
+  if (typeof data.image === 'string') {
+    image = data.image;
+  } else if (data.image && typeof data.image === 'object' && 'url' in data.image) {
+    image = typeof data.image.url === 'string' ? data.image.url : undefined;
+  }
+  
   return {
-    name: data.name || 'Untitled Recipe',
-    description: data.description,
-    prepTime: formatTime(data.prepTime),
-    cookTime: formatTime(data.cookTime),
-    totalTime: formatTime(data.totalTime),
-    servings: data.recipeYield ? String(data.recipeYield) : undefined,
-    ingredients: Array.isArray(data.recipeIngredient) 
-      ? data.recipeIngredient 
-      : data.recipeIngredient ? [data.recipeIngredient] : [],
-    instructions: parseInstructions(data.recipeInstructions),
-    image: data.image ? (typeof data.image === 'string' ? data.image : data.image.url) : undefined,
+    name,
+    description,
+    prepTime,
+    cookTime,
+    totalTime,
+    servings,
+    ingredients,
+    instructions,
+    image,
     url: '',
   };
 }
@@ -256,21 +274,25 @@ function extractFromHtmlPatterns($: cheerio.CheerioAPI): Recipe | null {
   };
 }
 
-function parseInstructions(instructions: any): string[] {
+function parseInstructions(instructions: unknown): string[] {
   if (!instructions) return [];
   
   if (Array.isArray(instructions)) {
     return instructions.map(instruction => {
       if (typeof instruction === 'string') return instruction;
-      if (instruction.text) return instruction.text;
-      if (instruction.name) return instruction.name;
+      if (typeof instruction === 'object' && instruction !== null) {
+        if ('text' in instruction && typeof instruction.text === 'string') return instruction.text;
+        if ('name' in instruction && typeof instruction.name === 'string') return instruction.name;
+      }
       return String(instruction);
     }).filter(Boolean);
   }
   
   if (typeof instructions === 'string') return [instructions];
-  if (instructions.text) return [instructions.text];
-  if (instructions.name) return [instructions.name];
+  if (typeof instructions === 'object' && instructions !== null) {
+    if ('text' in instructions && typeof instructions.text === 'string') return [instructions.text];
+    if ('name' in instructions && typeof instructions.name === 'string') return [instructions.name];
+  }
   
   return [String(instructions)];
 }

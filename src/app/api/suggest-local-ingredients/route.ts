@@ -140,7 +140,7 @@ Original ingredients: ${ingredients.join(', ')}
       }
       
       suggestions = JSON.parse(cleanedResponse);
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response:', responseContent);
       throw new Error('Invalid response format from AI');
     }
@@ -196,7 +196,7 @@ Original ingredients: ${ingredients.join(', ')}
 }
 
 // Add OPTIONS method for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
