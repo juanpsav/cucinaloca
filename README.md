@@ -157,4 +157,4 @@ Contributions are welcome! Please feel free to submit issues and enhancement req
 
 ---
 
-**Built with ❤️ for local food communities everywhere.**
+**Vibe-coded with ❤️ for local food communities everywhere.**

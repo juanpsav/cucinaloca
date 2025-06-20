@@ -302,8 +302,8 @@ export default function Home() {
                   {recipe.url && (
                     <a 
                       href={recipe.url} 
-                      target="_blank"
-                      rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
