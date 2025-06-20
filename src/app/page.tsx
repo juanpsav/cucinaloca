@@ -195,8 +195,8 @@ export default function Home() {
             style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
           >
                       <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Side by Side Input Fields */}
-            <div className="flex gap-2">
+            {/* Input Fields - Stacked on mobile, side by side on desktop */}
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="url"
                 value={recipeUrl}
@@ -423,15 +423,15 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-sage-green/20 bg-cream/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-5 xl:px-0 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
             {/* Logo */}
             <div className="flex items-baseline">
-              <span className="font-playfair text-xl font-bold text-sage-green">Cucina</span>
-              <span className="font-playfair text-xl font-bold italic text-blood-orange">Loca</span>
+              <span className="font-playfair text-lg sm:text-xl font-bold text-sage-green">Cucina</span>
+              <span className="font-playfair text-lg sm:text-xl font-bold italic text-blood-orange">Loca</span>
             </div>
             
             {/* Copyright */}
-            <p className="text-sage-green/70 text-sm">
+            <p className="text-sage-green/70 text-xs sm:text-sm text-center sm:text-right">
               © 2025 Cucina Loca. All rights reserved.
             </p>
           </div>
@@ -442,10 +442,10 @@ export default function Home() {
       {recipe && (
         <button
           onClick={() => setIsChatModalOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-3 px-4 py-3 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm group"
-          title="Chat with AI about this recipe"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm group"
+          title="Ask about this recipe"
         >
-          <MessageCircle className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 group-hover:scale-110 transition-transform" />
           <span className="hidden sm:block">Ask about this recipe</span>
         </button>
       )}
