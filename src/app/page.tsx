@@ -156,7 +156,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative flex flex-col">
       {/* Brand Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-cream via-cream to-lemon-cream/30"></div>
       
@@ -171,7 +171,7 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1">
         {/* Hero Section */}
         <div className="w-full max-w-lg px-5 xl:px-0 mx-auto pt-16">
           <div className="text-center mb-8">
