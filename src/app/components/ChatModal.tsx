@@ -147,7 +147,7 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
             </div>
             <div>
               <h2 className="font-playfair text-lg font-bold text-sage-green">Recipe Assistant</h2>
-              <p className="text-xs text-sage-green/70">GPT-4o mini</p>
+              <p className="text-xs text-sage-green/70">Powered by OpenAI</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

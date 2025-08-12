@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ 
-        error: 'OpenAI API key not configured' 
-      }, { status: 500 });
+        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.' 
+      }, { status: 401 });
     }
 
     // Get current month for seasonal considerations
@@ -183,14 +183,29 @@ Original ingredients: ${ingredients.join(', ')}
   } catch (error) {
     console.error('Local suggestions error:', error);
     
-    if (error instanceof Error && error.message.includes('API key')) {
-      return NextResponse.json({ 
-        error: 'OpenAI service temporarily unavailable' 
-      }, { status: 503 });
+    // Check for specific OpenAI API errors
+    if (error instanceof Error) {
+      if (error.message.includes('API key') || error.message.includes('authentication')) {
+        return NextResponse.json({ 
+          error: 'OpenAI API key not configured. Please add your OpenAI API key to your environment variables.' 
+        }, { status: 401 });
+      }
+      
+      if (error.message.includes('rate limit') || error.message.includes('quota')) {
+        return NextResponse.json({ 
+          error: 'OpenAI rate limit exceeded. Please try again later.' 
+        }, { status: 429 });
+      }
+      
+      if (error.message.includes('Invalid response format') || error.message.includes('JSON')) {
+        return NextResponse.json({ 
+          error: 'AI response format error. Please try again.' 
+        }, { status: 500 });
+      }
     }
     
     return NextResponse.json({ 
-      error: 'Failed to generate local ingredient suggestions' 
+      error: 'Failed to generate local ingredient suggestions. Please check your API configuration and try again.' 
     }, { status: 500 });
   }
 }

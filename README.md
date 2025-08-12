@@ -39,7 +39,7 @@ Visit **[cucinaloca.vercel.app](https://cucinaloca.vercel.app)** to try it out!
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety and developer experience
 - **Tailwind CSS** - Utility-first styling with custom brand colors
-- **OpenAI GPT-4o-mini** - AI-powered ingredient suggestions and chat
+- **OpenAI** - AI-powered ingredient suggestions and chat
 - **Google Places API** - City autocomplete with geographic context
 - **Cheerio** - Server-side HTML parsing for recipe extraction
 - **Lucide React** - Beautiful, consistent icons
@@ -125,7 +125,7 @@ Try these recipe URLs to see Cucina Loca in action:
 3. **HTML Pattern Matching** - Last resort using common CSS selectors
 
 ### AI Integration
-- **GPT-4o-mini** for cost-effective, high-quality suggestions
+- **OpenAI** for cost-effective, high-quality suggestions
 - **Structured prompts** with geographic and seasonal context
 - **Anti-hallucination measures** to prevent fake businesses in suggestions
 - **Confidence scoring** and locality categorization

@@ -50,6 +50,12 @@ export default function Home() {
         }),
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response. Please check your API configuration.');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -59,7 +65,22 @@ export default function Home() {
       const successData = data as LocalSuggestionsResponse;
       setLocalSuggestions(successData.suggestions);
     } catch (err) {
-      setSuggestionsError(err instanceof Error ? err.message : 'Failed to generate suggestions');
+      console.error('Suggestions error:', err);
+      
+      // Handle different types of errors
+      if (err instanceof Error) {
+        if (err.message.includes('API key not configured')) {
+          setSuggestionsError('OpenAI API key not configured. Please add your API key to your environment variables.');
+        } else if (err.message.includes('rate limit')) {
+          setSuggestionsError('OpenAI rate limit exceeded. Please try again in a few minutes.');
+        } else if (err.message.includes('JSON') || err.message.includes('<!DOCTYPE')) {
+          setSuggestionsError('Server error occurred. Please check your API configuration and try again.');
+        } else {
+          setSuggestionsError(err.message);
+        }
+      } else {
+        setSuggestionsError('Failed to generate suggestions. Please try again.');
+      }
     } finally {
       setSuggestionsLoading(false);
     }
@@ -372,9 +393,11 @@ export default function Home() {
                         <div>
                           <h4 className="font-medium text-red-800 text-sm">Error generating suggestions</h4>
                           <p className="text-red-700 text-xs mt-1">{suggestionsError}</p>
-                          <p className="text-red-600 text-xs mt-1">
-                            Make sure you have added your OpenAI API key to your environment variables.
-                          </p>
+                          {suggestionsError.includes('API key') && (
+                            <p className="text-red-600 text-xs mt-1">
+                              Check your .env.local file and ensure OPENAI_API_KEY is set correctly.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -413,6 +436,67 @@ export default function Home() {
                       </p>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Sections */}
+            <div className="mt-8 space-y-6">
+                             {/* The Chef's Perspective */}
+               <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
+                 <div className="p-4 border-b border-gray-100">
+                   <h2 className="font-playfair text-lg font-bold text-sage-green">
+                     👨‍🍳 The Chef's Perspective
+                   </h2>
+                 </div>
+                                   <div className="p-4 space-y-6">
+                    {/* Techniques Sub-section */}
+                    <div>
+                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">Techniques</h3>
+                      <div className="text-center py-6">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <MessageCircle className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <h4 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h4>
+                        <p className="text-gray-600 text-xs">
+                          Professional chef insights and cooking tips for this recipe.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Flavor Pairing Sub-section */}
+                    <div>
+                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">Flavor Pairing</h3>
+                      <div className="text-center py-6">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <MessageCircle className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <h4 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h4>
+                        <p className="text-gray-600 text-xs">
+                          Professional chef insights and cooking tips for this recipe.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+
+              {/* User Reviews */}
+              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
+                <div className="p-4 border-b border-gray-100">
+                  <h2 className="font-playfair text-lg font-bold text-sage-green">
+                    ⭐ User Reviews
+                  </h2>
+                </div>
+                <div className="p-4">
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Users className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h3>
+                    <p className="text-gray-600 text-xs">
+                      Community reviews and ratings for this recipe.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
