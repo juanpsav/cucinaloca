@@ -446,7 +446,7 @@ export default function Home() {
                <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
                  <div className="p-4 border-b border-gray-100">
                    <h2 className="font-playfair text-lg font-bold text-sage-green">
-                     👨‍🍳 The Chef's Perspective
+                     👨‍🍳 The Chef&apos;s Perspective
                    </h2>
                  </div>
                                    <div className="p-4 space-y-6">
