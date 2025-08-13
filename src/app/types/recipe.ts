@@ -19,27 +19,27 @@ export interface ParseRecipeError {
   error: string;
 }
 
-export interface LocalSuggestion {
-  category: string;
-  categoryIcon: string;
-  originalIngredient: string;
-  localAlternative: string;
-  substitution: string;
-  localWhy: string;
-  howToSource: string;
-  locality: 'hyper-local' | 'regional' | 'national';
-  confidence: 'high' | 'medium' | 'low';
-  processing: 'minimal' | 'moderate' | 'highly-processed';
+// New unified analysis interfaces
+export interface RecipeAnalysis {
+  techniqueAnalysis: {
+    appreciate: string;
+    improve: string;
+  };
+  flavorPairings: {
+    alignments: string[];
+    enhancement: string;
+  };
+  substitutions: {
+    hyperLocal: string[];
+    regional: string[];
+    seasonal: string[];
+    avoidingProcessed: string;
+  };
 }
 
-export interface LocalSuggestionsResponse {
-  suggestions: LocalSuggestion[];
+export interface UnifiedAnalysisResponse {
+  analysis: RecipeAnalysis;
   location: string;
+  region: string | null;
   month: string;
-}
-
-export interface LocalSuggestionsRequest {
-  ingredients: string[];
-  city: string;
-  recipeName: string;
 } 

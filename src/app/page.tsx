@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { useGooglePlaces } from './hooks/useGooglePlaces';
-import { Recipe, ParseRecipeResponse, ParseRecipeError, LocalSuggestion, LocalSuggestionsResponse } from './types/recipe';
+import { Recipe, ParseRecipeResponse, ParseRecipeError, RecipeAnalysis, UnifiedAnalysisResponse } from './types/recipe';
 import ChatModal from './components/ChatModal';
 
 // You'll need to set this in your environment variables
@@ -15,11 +15,14 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [localSuggestions, setLocalSuggestions] = useState<LocalSuggestion[]>([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+  const [recipeAnalysis, setRecipeAnalysis] = useState<RecipeAnalysis | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isRecipeExpanded, setIsRecipeExpanded] = useState(false);
+  const [localAlternativesHeight, setLocalAlternativesHeight] = useState(256); // Default fallback height
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   
+  const localAlternativesRef = useRef<HTMLDivElement>(null);
   const { inputRef, isLoaded, selectedPlace, setSelectedPlace } = useGooglePlaces(GOOGLE_PLACES_API_KEY);
 
   // Update city state when a place is selected
@@ -31,22 +34,27 @@ export default function Home() {
     }
   }, [selectedPlace]);
 
-  const generateLocalSuggestions = useCallback(async () => {
+  const generateRecipeAnalysis = useCallback(async () => {
     if (!recipe || !city) return;
 
-    setSuggestionsLoading(true);
-    setSuggestionsError(null);
+    setAnalysisLoading(true);
+    setAnalysisError(null);
     
     try {
-      const response = await fetch('/api/suggest-local-ingredients', {
+      const response = await fetch('/api/analyze-recipe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ingredients: recipe.ingredients,
+          recipe: {
+            name: recipe.name,
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+            description: recipe.description,
+          },
           city: city,
-          recipeName: recipe.name,
+          region: selectedPlace?.formatted_address?.split(',').slice(1).join(',').trim() || undefined,
         }),
       });
 
@@ -59,39 +67,55 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate local suggestions');
+        throw new Error(data.error || 'Failed to analyze recipe');
       }
 
-      const successData = data as LocalSuggestionsResponse;
-      setLocalSuggestions(successData.suggestions);
+      const successData = data as UnifiedAnalysisResponse;
+      setRecipeAnalysis(successData.analysis);
     } catch (err) {
-      console.error('Suggestions error:', err);
+      console.error('Analysis error:', err);
       
       // Handle different types of errors
       if (err instanceof Error) {
         if (err.message.includes('API key not configured')) {
-          setSuggestionsError('OpenAI API key not configured. Please add your API key to your environment variables.');
+          setAnalysisError('OpenAI API key not configured. Please add your API key to your environment variables.');
         } else if (err.message.includes('rate limit')) {
-          setSuggestionsError('OpenAI rate limit exceeded. Please try again in a few minutes.');
+          setAnalysisError('OpenAI rate limit exceeded. Please try again in a few minutes.');
         } else if (err.message.includes('JSON') || err.message.includes('<!DOCTYPE')) {
-          setSuggestionsError('Server error occurred. Please check your API configuration and try again.');
+          setAnalysisError('Server error occurred. Please check your API configuration and try again.');
         } else {
-          setSuggestionsError(err.message);
+          setAnalysisError(err.message);
         }
       } else {
-        setSuggestionsError('Failed to generate suggestions. Please try again.');
+        setAnalysisError('Failed to analyze recipe. Please try again.');
       }
     } finally {
-      setSuggestionsLoading(false);
+      setAnalysisLoading(false);
     }
-  }, [recipe, city]);
+  }, [recipe, city, selectedPlace]);
 
-  // Generate local suggestions when we have both recipe and city
+  // Generate recipe analysis when we have both recipe and city
   useEffect(() => {
     if (recipe && city && recipe.ingredients.length > 0) {
-      generateLocalSuggestions();
+      generateRecipeAnalysis();
     }
-  }, [recipe, city, generateLocalSuggestions]);
+  }, [recipe, city, generateRecipeAnalysis]);
+
+  // Measure Local Alternatives height to match Original Recipe collapsed height
+  useEffect(() => {
+    if (localAlternativesRef.current && recipeAnalysis && !isRecipeExpanded) {
+      // Add a small delay to ensure content is fully rendered
+      const timer = setTimeout(() => {
+        if (localAlternativesRef.current) {
+          const height = localAlternativesRef.current.offsetHeight;
+          // Reduce the height to make tiles smaller and eliminate white space
+          setLocalAlternativesHeight(Math.max(height - 60, 180));
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [recipeAnalysis, isRecipeExpanded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,8 +124,8 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setRecipe(null);
-    setLocalSuggestions([]);
-    setSuggestionsError(null);
+    setRecipeAnalysis(null);
+    setAnalysisError(null);
 
     try {
       const response = await fetch('/api/parse-recipe', {
@@ -138,43 +162,17 @@ export default function Home() {
     }
   };
 
-
-
-  const getCategoryColor = (category: string) => {
-    console.log('Category received:', category); // Debug log
-    // Distinct, harmonious colors for each category
-    if (category.includes('Hyper Local') || category.includes('hyper')) {
-      return 'bg-teal-50 border-teal-200 text-teal-800'; // Teal for hyper-local
+  const handleExpandToggle = () => {
+    setIsRecipeExpanded(!isRecipeExpanded);
+    // Reset height measurement when expanding
+    if (isRecipeExpanded) {
+      setLocalAlternativesHeight(256);
     }
-    if (category.includes('Regional') || category.includes('regional')) {
-      return 'bg-sky-50 border-sky-200 text-sky-800'; // Sky blue for regional
-    }
-    if (category.includes('Seasonal') || category.includes('seasonal')) {
-      return 'bg-lime-50 border-lime-200 text-lime-800'; // Lime green for seasonal
-    }
-    if (category.includes('Processed') || category.includes('processed')) {
-      return 'bg-orange-50 border-orange-200 text-orange-800'; // Orange for avoiding processed
-    }
-    console.log('Using default color for category:', category); // Debug log
-    return 'bg-slate-50 border-slate-200 text-slate-800'; // Slate default
   };
 
-  const getCategoryBadgeColor = (category: string) => {
-    // Distinct badge colors matching the categories
-    if (category.includes('Hyper Local') || category.includes('hyper')) {
-      return 'bg-teal-100 text-teal-700';
-    }
-    if (category.includes('Regional') || category.includes('regional')) {
-      return 'bg-sky-100 text-sky-700';
-    }
-    if (category.includes('Seasonal') || category.includes('seasonal')) {
-      return 'bg-lime-100 text-lime-700';
-    }
-    if (category.includes('Processed') || category.includes('processed')) {
-      return 'bg-orange-100 text-orange-700';
-    }
-    return 'bg-slate-100 text-slate-700'; // Slate default
-  };
+
+
+
 
   return (
     <div className="min-h-screen relative flex flex-col">
@@ -279,24 +277,27 @@ export default function Home() {
         {recipe && (
           <div className="w-full max-w-5xl mx-auto px-5 xl:px-0 mt-12 pb-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Original Recipe */}
-              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
-                <div className="p-4 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-playfair text-lg font-bold text-sage-green">
-                      Original Recipe
-                    </h2>
-                    <button
-                      onClick={() => setIsChatModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blood-orange bg-blood-orange/10 hover:bg-blood-orange/20 rounded-lg transition-colors border border-blood-orange/20"
-                    >
-                      <MessageCircle className="h-3 w-3" />
-                      Ask about this recipe
-                    </button>
-                  </div>
-                </div>
+              {/* Original Recipe - Collapsible */}
+              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm relative">
+                                 <div className="p-4 border-b border-gray-100">
+                   <div className="flex items-center justify-between">
+                     <h2 className="font-playfair text-lg font-bold text-sage-green">
+                       Original Recipe
+                     </h2>
+                     <button
+                       onClick={() => setIsChatModalOpen(true)}
+                       className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blood-orange bg-blood-orange/10 hover:bg-blood-orange/20 rounded-lg transition-colors border border-blood-orange/20"
+                     >
+                       <MessageCircle className="h-3 w-3" />
+                       Ask about this recipe
+                     </button>
+                   </div>
+                 </div>
                 
-                <div className="p-4 space-y-4">
+                                 <div 
+                   className={`p-4 space-y-4 ${!isRecipeExpanded ? 'overflow-hidden' : ''}`}
+                   style={!isRecipeExpanded && localAlternativesHeight > 0 ? { maxHeight: `${localAlternativesHeight}px` } : {}}
+                 >
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-1">{recipe.name}</h3>
                     {recipe.description && (
@@ -323,8 +324,8 @@ export default function Home() {
                   {recipe.url && (
                     <a 
                       href={recipe.url} 
-          target="_blank"
-          rel="noopener noreferrer"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
@@ -332,42 +333,69 @@ export default function Home() {
                     </a>
                   )}
 
-                                  {/* Ingredients */}
-                {recipe.ingredients.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2 text-sm">Ingredients</h4>
-                    <ul className="space-y-1">
-                      {recipe.ingredients.map((ingredient, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>
-                          <span className="text-gray-700 text-xs">{ingredient}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  {/* Ingredients */}
+                  {recipe.ingredients.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm">Ingredients</h4>
+                      <ul className="space-y-1">
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                            <span className="text-gray-700 text-xs">{ingredient}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                                  {/* Instructions */}
-                {recipe.instructions.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2 text-sm">Instructions</h4>
-                    <ol className="space-y-2">
-                      {recipe.instructions.map((instruction, index) => (
-                        <li key={index} className="flex gap-2">
-                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] h-5 flex items-center justify-center flex-shrink-0">
-                            {index + 1}
-                          </span>
-                          <span className="text-gray-700 text-xs leading-relaxed">{instruction}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-                </div>
+                  {/* Instructions */}
+                  {recipe.instructions.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm">Instructions</h4>
+                      <ol className="space-y-2">
+                        {recipe.instructions.map((instruction, index) => (
+                          <li key={index} className="flex gap-2">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] h-5 flex items-center justify-center flex-shrink-0">
+                              {index + 1}
+                            </span>
+                            <span className="text-gray-700 text-xs leading-relaxed">{instruction}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                                 </div>
+                 
+                 {/* Gradient overlay and expand button when collapsed */}
+                 {!isRecipeExpanded && (
+                   <>
+                     <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                     <button
+                       onClick={handleExpandToggle}
+                       className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white/80 hover:bg-white/90 backdrop-blur-sm rounded-lg transition-colors border border-gray-200/50 shadow-sm"
+                     >
+                       <ChevronDown className="h-3 w-3" />
+                       Expand
+                     </button>
+                   </>
+                 )}
+                 
+                 {/* Collapse button when expanded */}
+                 {isRecipeExpanded && (
+                   <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+                     <button
+                       onClick={handleExpandToggle}
+                       className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white/80 hover:bg-white/90 backdrop-blur-sm rounded-lg transition-colors border border-gray-200/50 shadow-sm"
+                     >
+                       <ChevronUp className="h-3 w-3" />
+                       Collapse
+                     </button>
+                   </div>
+                 )}
               </div>
 
-              {/* Local Suggestions */}
-              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
+                             {/* Local Suggestions */}
+               <div ref={localAlternativesRef} className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="font-playfair text-lg font-bold text-sage-green">
                     🧑‍🍳 Local Alternatives
@@ -377,23 +405,23 @@ export default function Home() {
                   </p>
                 </div>
                 
-                <div className="p-4">
-                  {suggestionsLoading && (
-                    <div className="flex items-center gap-2 py-6">
-                      <Loader2 className="h-4 w-4 animate-spin text-green-600" />
-                      <span className="text-green-600 font-medium text-sm">Generating local suggestions...</span>
-                    </div>
-                  )}
+                                 <div className="p-3">
+                   {analysisLoading && (
+                     <div className="flex items-center gap-2 py-4">
+                       <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                       <span className="text-green-600 font-medium text-sm">Analyzing recipe...</span>
+                     </div>
+                   )}
                   
-                  {/* Suggestions Error */}
-                  {suggestionsError && (
+                  {/* Analysis Error */}
+                  {analysisError && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                       <div className="flex items-start gap-2">
                         <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="font-medium text-red-800 text-sm">Error generating suggestions</h4>
-                          <p className="text-red-700 text-xs mt-1">{suggestionsError}</p>
-                          {suggestionsError.includes('API key') && (
+                          <h4 className="font-medium text-red-800 text-sm">Error analyzing recipe</h4>
+                          <p className="text-red-700 text-xs mt-1">{analysisError}</p>
+                          {analysisError.includes('API key') && (
                             <p className="text-red-600 text-xs mt-1">
                               Check your .env.local file and ensure OPENAI_API_KEY is set correctly.
                             </p>
@@ -403,36 +431,72 @@ export default function Home() {
                     </div>
                   )}
 
-                                  {/* Local Suggestions Display */}
-                {localSuggestions.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-gray-900 text-sm">Smart Substitutions</h3>
-                    <div className="space-y-2">
-                      {localSuggestions.map((suggestion, index) => (
-                        <div key={index} className={`${getCategoryColor(suggestion.category)} border rounded-lg p-3`}>
-                          <p className="text-xs leading-relaxed">
-                            {suggestion.substitution}
-                          </p>
-                          {suggestion.category && (
-                            <span className={`inline-block mt-1 px-2 py-0.5 ${getCategoryBadgeColor(suggestion.category)} text-xs font-medium rounded-full`}>
-                              {suggestion.category}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                                                                            {/* Unified Analysis Display */}
+                    {recipeAnalysis && (
+                      <div className="space-y-2">
+                       {/* Avoiding Processed */}
+                       {recipeAnalysis.substitutions.avoidingProcessed && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                           <div className="flex items-start gap-2">
+                             <span className="text-orange-500 text-sm">✓</span>
+                             <div>
+                               <h4 className="font-medium text-gray-900 text-sm mb-1">Avoiding Processed Foods</h4>
+                               <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.avoidingProcessed}</p>
+                             </div>
+                           </div>
+                         </div>
+                       )}
 
-                  {/* No suggestions available */}
-                  {!suggestionsLoading && !suggestionsError && localSuggestions.length === 0 && recipe && city && (
+                       {/* Seasonal Substitutions */}
+                       {recipeAnalysis.substitutions.seasonal.length > 0 && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                           <div className="flex items-start gap-2">
+                             <span className="text-green-500 text-sm">📅</span>
+                             <div>
+                               <h4 className="font-medium text-gray-900 text-sm mb-1">Seasonal Ingredients</h4>
+                               <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.seasonal[0]}</p>
+                             </div>
+                           </div>
+                         </div>
+                       )}
+
+                       {/* Hyper Local Substitutions */}
+                       {recipeAnalysis.substitutions.hyperLocal.length > 0 && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                           <div className="flex items-start gap-2">
+                             <span className="text-blue-500 text-sm">📍</span>
+                             <div>
+                               <h4 className="font-medium text-gray-900 text-sm mb-1">Local Ingredients ({city.split(',')[0]})</h4>
+                               <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.hyperLocal[0]}</p>
+                             </div>
+                           </div>
+                         </div>
+                       )}
+
+                       {/* Regional Substitutions */}
+                       {recipeAnalysis.substitutions.regional.length > 0 && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                           <div className="flex items-start gap-2">
+                             <span className="text-blue-500 text-sm">📍</span>
+                             <div>
+                               <h4 className="font-medium text-gray-900 text-sm mb-1">Regional Ingredients ({city.split(',').slice(1).join(',').trim() || 'region'})</h4>
+                               <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.regional[0]}</p>
+                             </div>
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   )}
+
+                  {/* No analysis available */}
+                  {!analysisLoading && !analysisError && !recipeAnalysis && recipe && city && (
                     <div className="text-center py-6">
                       <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Search className="h-6 w-6 text-gray-400" />
                       </div>
-                      <h3 className="font-medium text-gray-900 mb-1 text-sm">No Local Alternatives Found</h3>
+                      <h3 className="font-medium text-gray-900 mb-1 text-sm">No Analysis Available</h3>
                       <p className="text-gray-600 text-xs">
-                        The ingredients in this recipe may not have meaningful local alternatives in {city}.
+                        Unable to analyze this recipe for local alternatives in {city}.
                       </p>
                     </div>
                   )}
@@ -450,32 +514,90 @@ export default function Home() {
                    </h2>
                  </div>
                                    <div className="p-4 space-y-6">
-                    {/* Techniques Sub-section */}
+                                        {/* What The Chef Would Appreciate Sub-section */}
                     <div>
-                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">Techniques</h3>
-                      <div className="text-center py-6">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <MessageCircle className="h-6 w-6 text-gray-400" />
+                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">What The Chef Would Appreciate</h3>
+                      {recipeAnalysis ? (
+                        <div className="space-y-3">
+                                                                                 {/* Technique to Appreciate */}
+                            <div className="bg-cream/50 border-l-4 border-sage-green rounded-lg p-3 relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-r from-sage-green/5 to-transparent pointer-events-none"></div>
+                              <div className="flex items-start gap-2 relative z-10">
+                                <span className="text-sage-green text-sm font-bold">🔪</span>
+                                <div>
+                                  <h4 className="font-medium text-sage-green text-sm mb-1">Technique</h4>
+                                                                     <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.techniqueAnalysis.appreciate.replace(/\s*\*\s*$/, '')}</p>
+                                </div>
+                              </div>
+                            </div>
+                           
+                                                       {/* Flavor Alignments */}
+                            {recipeAnalysis.flavorPairings.alignments.map((alignment, index) => (
+                              <div key={index} className="bg-cream/20 border-l-4 border-sage-green/70 rounded-lg p-3 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(123,138,114,0.03)_0%,transparent_50%)] pointer-events-none"></div>
+                                <div className="flex items-start gap-2 relative z-10">
+                                  <span className="text-sage-green/70 text-base">🍋</span>
+                                  <div>
+                                    <h4 className="font-medium text-sage-green text-sm mb-1">Flavor Alignment</h4>
+                                    <p className="text-gray-700 text-xs leading-relaxed">{alignment}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                         </div>
-                        <h4 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h4>
-                        <p className="text-gray-600 text-xs">
-                          Professional chef insights and cooking tips for this recipe.
-                        </p>
-                      </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Loader2 className="h-6 w-6 text-gray-400 animate-spin" />
+                          </div>
+                          <h4 className="font-medium text-gray-900 mb-1 text-sm">Analyzing chef insights...</h4>
+                          <p className="text-gray-600 text-xs">
+                            Professional chef appreciation and feedback for this recipe.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Flavor Pairing Sub-section */}
+                    {/* What The Chef Might Critique Sub-section */}
                     <div>
-                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">Flavor Pairing</h3>
-                      <div className="text-center py-6">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <MessageCircle className="h-6 w-6 text-gray-400" />
+                      <h3 className="font-playfair text-base font-semibold text-sage-green mb-4 border-b border-gray-100 pb-2">What The Chef Might Critique</h3>
+                      {recipeAnalysis ? (
+                        <div className="space-y-3">
+                                                                                 {/* Technique to Improve */}
+                            <div className="bg-gray-100/50 border-l-4 border-gray-400 rounded-lg p-3 relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-r from-gray-400/5 to-transparent pointer-events-none"></div>
+                              <div className="flex items-start gap-2 relative z-10">
+                                <span className="text-gray-500 text-sm font-bold">🔪</span>
+                                <div>
+                                  <h4 className="font-medium text-gray-700 text-sm mb-1">Technique</h4>
+                                  <p className="text-gray-600 text-xs leading-relaxed">{recipeAnalysis.techniqueAnalysis.improve}</p>
+                                </div>
+                              </div>
+                            </div>
+                           
+                                                       {/* Suggested Enhancement */}
+                            <div className="bg-gray-100/30 border-l-4 border-gray-400/70 rounded-lg p-3 relative overflow-hidden">
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(107,114,128,0.03)_0%,transparent_50%)] pointer-events-none"></div>
+                              <div className="flex items-start gap-2 relative z-10">
+                                <span className="text-gray-500/70 text-base">🍋</span>
+                                <div>
+                                                                     <h4 className="font-medium text-gray-700 text-sm mb-1">Flavor Enhancement</h4>
+                                  <p className="text-gray-600 text-xs leading-relaxed">{recipeAnalysis.flavorPairings.enhancement}</p>
+                                </div>
+                              </div>
+                            </div>
                         </div>
-                        <h4 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h4>
-                        <p className="text-gray-600 text-xs">
-                          Professional chef insights and cooking tips for this recipe.
-                        </p>
-                      </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Loader2 className="h-6 w-6 text-gray-400 animate-spin" />
+                          </div>
+                          <h4 className="font-medium text-gray-900 mb-1 text-sm">Analyzing improvement areas...</h4>
+                          <p className="text-gray-600 text-xs">
+                            Professional chef critique and enhancement suggestions for this recipe.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                </div>
