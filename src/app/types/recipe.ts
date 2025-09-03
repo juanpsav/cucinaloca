@@ -26,7 +26,7 @@ export interface RecipeAnalysis {
     improve: string;
   };
   flavorPairings: {
-    alignments: string[];
+    chefFeedback: string;
     enhancement: string;
   };
   substitutions: {
@@ -42,4 +42,24 @@ export interface UnifiedAnalysisResponse {
   location: string;
   region: string | null;
   month: string;
+}
+
+// New interfaces for user reviews
+export interface UserReview {
+  id: string;
+  rating: number;
+  comment: string;
+  userName: string;
+  date: string;
+  helpful: number;
+}
+
+export interface ReviewsSummary {
+  whatsGood: string[];
+  whatToChange: string[];
+}
+
+export interface ReviewsAnalysisResponse {
+  summary: ReviewsSummary;
+  success: boolean;
 } 

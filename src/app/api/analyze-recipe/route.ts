@@ -11,7 +11,7 @@ interface RecipeAnalysis {
     improve: string;
   };
   flavorPairings: {
-    alignments: string[];
+    chefFeedback: string;
     enhancement: string;
   };
   substitutions: {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     const prompt = `You are a professional chef specializing in recipe analysis and improvement. 
 You will analyze recipes focusing on techniques that professional chefs would appreciate or critique, 
-flavor alignments with culinary pairing principles, and practical substitutions for local ingredients and seasonal availability.
+flavor pairings with culinary principles, and practical substitutions for local ingredients and seasonal availability.
 
 Recipe: "${recipe.name}"
 Location: ${city}${region ? `, ${region}` : ''}
@@ -69,7 +69,7 @@ ${recipe.instructions.map((instruction, index) => `${index + 1}. ${instruction}`
 Analyze this recipe with these criteria:
 
 1. **Technique Analysis** (what professional chefs would appreciate or critique)
-2. **Flavor Pairings** (current alignments and suggested enhancements)
+2. **Flavor Pairings** (chef's flavor feedback and suggested enhancements)
 3. **Practical Substitutions** for local and seasonal ingredients
 
 **OUTPUT YOUR RESPONSE IN THIS EXACT FORMAT:**
@@ -79,9 +79,7 @@ Analyze this recipe with these criteria:
 * **Technique to Improve:** [max 1 sentence - what could be enhanced for better results]
 
 #### 🧂 Flavor Pairings
-* **Current Flavor Alignment:** 
-  1. [max 1 sentence - first flavor combination that works well]
-  2. [max 1 sentence - second flavor combination that works well]
+* **Chef's Flavor Feedback:** [max 1 sentence - one positive flavor combination or pairing that works well in this recipe]
 * **Suggested Enhancement:** [max 1 sentence - one specific flavor addition or pairing that would elevate the dish]
 
 #### 🔄 Substitutions
@@ -216,7 +214,7 @@ function parseAnalysisResponse(response: string): RecipeAnalysis {
   
   // Extract flavor pairings
   const flavorSection = extractBetween(response, "#### 🧂 Flavor Pairings", "#### 🔄");
-  const flavorAlignments = extractNumberedItems(flavorSection, "**Current Flavor Alignment:**", 2);
+  const chefFeedback = extractBetween(flavorSection, "**Chef's Flavor Feedback:**", "**Suggested Enhancement:**");
   const flavorEnhancement = extractBetween(flavorSection, "**Suggested Enhancement:**", "####");
   
   // Extract substitutions
@@ -251,7 +249,7 @@ function parseAnalysisResponse(response: string): RecipeAnalysis {
       improve: techniqueImprove || "Technique analysis not available"
     },
     flavorPairings: {
-      alignments: flavorAlignments.length >= 2 ? flavorAlignments : ["Flavor alignment not available", "Flavor alignment not available"],
+      chefFeedback: chefFeedback || "Chef's flavor feedback not available",
       enhancement: flavorEnhancement || "Flavor enhancement not available"
     },
     substitutions: {

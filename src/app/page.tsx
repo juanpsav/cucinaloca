@@ -5,6 +5,7 @@ import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle
 import { useGooglePlaces } from './hooks/useGooglePlaces';
 import { Recipe, ParseRecipeResponse, ParseRecipeError, RecipeAnalysis, UnifiedAnalysisResponse } from './types/recipe';
 import ChatModal from './components/ChatModal';
+import ReviewsSummary from './components/ReviewsSummary';
 
 // You'll need to set this in your environment variables
 const GOOGLE_PLACES_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || '';
@@ -531,19 +532,17 @@ export default function Home() {
                               </div>
                             </div>
                            
-                                                       {/* Flavor Alignments */}
-                            {recipeAnalysis.flavorPairings.alignments.map((alignment, index) => (
-                              <div key={index} className="bg-cream/20 border-l-4 border-sage-green/70 rounded-lg p-3 relative overflow-hidden">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(123,138,114,0.03)_0%,transparent_50%)] pointer-events-none"></div>
-                                <div className="flex items-start gap-2 relative z-10">
-                                  <span className="text-sage-green/70 text-base">🍋</span>
-                                  <div>
-                                    <h4 className="font-medium text-sage-green text-sm mb-1">Flavor Alignment</h4>
-                                    <p className="text-gray-700 text-xs leading-relaxed">{alignment}</p>
-                                  </div>
+                                                       {/* Chef's Flavor Feedback */}
+                            <div className="bg-cream/20 border-l-4 border-sage-green/70 rounded-lg p-3 relative overflow-hidden">
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(123,138,114,0.03)_0%,transparent_50%)] pointer-events-none"></div>
+                              <div className="flex items-start gap-2 relative z-10">
+                                <span className="text-sage-green/70 text-base">🍋</span>
+                                <div>
+                                  <h4 className="font-medium text-sage-green text-sm mb-1">Chef's Flavor Feedback</h4>
+                                  <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.flavorPairings.chefFeedback}</p>
                                 </div>
                               </div>
-                            ))}
+                            </div>
                         </div>
                       ) : (
                         <div className="text-center py-6">
@@ -610,15 +609,7 @@ export default function Home() {
                   </h2>
                 </div>
                 <div className="p-4">
-                  <div className="text-center py-6">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Users className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Coming Soon</h3>
-                    <p className="text-gray-600 text-xs">
-                      Community reviews and ratings for this recipe.
-                    </p>
-                  </div>
+                  <ReviewsSummary recipe={recipe} />
                 </div>
               </div>
             </div>
