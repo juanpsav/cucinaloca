@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ReviewsSummaryProps {
@@ -15,13 +15,7 @@ export default function ReviewsSummary({ recipe }: ReviewsSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (recipe?.name) {
-      generateReviewSummary();
-    }
-  }, [recipe]);
-
-  const generateReviewSummary = async () => {
+  const generateReviewSummary = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -52,7 +46,13 @@ export default function ReviewsSummary({ recipe }: ReviewsSummaryProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [recipe]);
+
+  useEffect(() => {
+    if (recipe?.name) {
+      generateReviewSummary();
+    }
+  }, [recipe, generateReviewSummary]);
 
   if (isLoading) {
     return (

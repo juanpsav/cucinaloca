@@ -172,24 +172,7 @@ function parseAnalysisResponse(response: string): RecipeAnalysis {
     return text.substring(contentStart, endIndex).trim();
   };
 
-  // Helper function to extract numbered items
-  const extractNumberedItems = (text: string, section: string, count: number): string[] => {
-    const sectionStart = text.indexOf(section);
-    if (sectionStart === -1) return [];
-    
-    const sectionText = text.substring(sectionStart);
-    const items: string[] = [];
-    
-    for (let i = 1; i <= count; i++) {
-      const itemPattern = new RegExp(`${i}\\.\\s*([^\\n]+)`, 's');
-      const match = sectionText.match(itemPattern);
-      if (match && match[1]) {
-        items.push(match[1].trim());
-      }
-    }
-    
-    return items;
-  };
+
 
   // Helper function to extract bullet points
   const extractBulletPoints = (text: string): string[] => {

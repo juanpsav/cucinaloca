@@ -538,7 +538,7 @@ export default function Home() {
                               <div className="flex items-start gap-2 relative z-10">
                                 <span className="text-sage-green/70 text-base">🍋</span>
                                 <div>
-                                  <h4 className="font-medium text-sage-green text-sm mb-1">Chef's Flavor Feedback</h4>
+                                  <h4 className="font-medium text-sage-green text-sm mb-1">Chef&apos;s Flavor Feedback</h4>
                                   <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.flavorPairings.chefFeedback}</p>
                                 </div>
                               </div>
