@@ -4,28 +4,16 @@
 
 Cucina Loca transforms any recipe by suggesting local ingredient alternatives that are fresher, more sustainable, and support your local food community. Simply enter a recipe URL and your location to discover high-impact ingredient substitutions available in your area.
 
-![Cucina Loca](https://cucinaloca.com)
+[Cucina Loca](https://cucinaloca.com)
 
 ## ✨ Features
 
-### 🎯 **Smart Local Ingredient Suggestions**
-- AI-powered local and seasonal alternatives based on your location
+- **Smart Local Ingredient Suggestions** - AI-powered local and seasonal alternatives based on your location
+- **AI-Powered Recipe Assistant** - Interactive chat for cooking questions and technique guidance
+- **Chef's Perspective** - Professional chef feedback on techniques and flavor pairings
+- **User Reviews Summary** - AI analysis of user reviews with key insights and tips
+- **Universal Recipe Parsing** - Works with any recipe URL from cooking websites
 
-### 🤖 **AI-Powered Recipe Assistant**
-- Interactive chat for cooking questions and technique guidance
-
-### 👨‍🍳 **Chef's Perspective**
-- Professional chef feedback on techniques and flavor pairings
-
-### ⭐ **User Reviews Summary**
-- AI analysis of user reviews with key insights and tips
-
-### 🌐 **Universal Recipe Parsing**
-- Works with any recipe URL from cooking websites
-
-## 🚀 Live Demo
-
-Visit **[cucinaloca.vercel.app](https://cucinaloca.vercel.app)** to try it out!
 
 ## 🛠️ Tech Stack
 
