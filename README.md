@@ -4,31 +4,24 @@
 
 Cucina Loca transforms any recipe by suggesting local ingredient alternatives that are fresher, more sustainable, and support your local food community. Simply enter a recipe URL and your location to discover high-impact ingredient substitutions available in your area.
 
-![Cucina Loca](https://cucinaloca.vercel.app)
+![Cucina Loca](https://cucinaloca.com)
 
 ## ✨ Features
 
 ### 🎯 **Smart Local Ingredient Suggestions**
-- **Hyper-Local Ingredients** (0-25 miles): Farmers markets, local farms, nearby producers
-- **Regional Ingredients** (25-200 miles): State/province specialties, regional distributors  
-- **Seasonal Ingredients**: Fresh, in-season alternatives for peak flavor and nutrition
-- **Avoiding Processed Foods**: Whole food alternatives to highly processed ingredients
+- AI-powered local and seasonal alternatives based on your location
 
 ### 🤖 **AI-Powered Recipe Assistant**
-- Interactive chat interface for recipe questions
-- Cooking technique guidance and troubleshooting
-- Ingredient substitution recommendations
+- Interactive chat for cooking questions and technique guidance
+
+### 👨‍🍳 **Chef's Perspective**
+- Professional chef feedback on techniques and flavor pairings
+
+### ⭐ **User Reviews Summary**
+- AI analysis of user reviews with key insights and tips
 
 ### 🌐 **Universal Recipe Parsing**
 - Works with any recipe URL from cooking websites
-- 3-tier extraction system: JSON-LD → Microdata → HTML patterns
-- Extracts ingredients, instructions, prep time, servings, and more
-
-### 🎨 **Beautiful, Responsive Design**
-- Elegant cream, sage green, and blood orange color palette
-- Playfair Display typography for sophisticated branding
-- Mobile-optimized with responsive layouts
-- Smooth animations and intuitive user experience
 
 ## 🚀 Live Demo
 
@@ -79,28 +72,19 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ### 1. **Enter Recipe & Location**
 - Paste any recipe URL from popular cooking websites
-- Select your city using Google Places autocomplete for geographic context
+- Select your city using Google Places autocomplete
 
 ### 2. **AI Analysis**
 - Recipe ingredients are parsed and analyzed by AI
-- Location-specific suggestions are generated based on:
-  - Local agricultural patterns and seasonal availability
-  - Regional food producers and distributors
-  - Farmers markets and local food networks
-  - Processing levels and sustainability factors
+- Location-specific suggestions are generated based on local availability and seasonal patterns
 
 ### 3. **Smart Substitutions**
-- View 3-5 high-impact ingredient alternatives organized by category
-- Each suggestion includes:
-  - Specific substitution instructions ("Replace X with Y")
-  - Local sourcing guidance and availability
-  - Benefits of choosing local alternatives
-  - Processing level indicators (minimal/moderate/highly-processed)
+- View local ingredient alternatives organized by category
+- Each suggestion includes substitution instructions and sourcing guidance
 
 ### 4. **Recipe Chat Assistant**
 - Ask questions about cooking techniques, timing, or modifications
 - Get personalized advice for the specific recipe
-- Troubleshoot cooking issues with AI guidance
 
 ## 🧪 Testing the App
 
@@ -135,17 +119,6 @@ Try these recipe URLs to see Cucina Loca in action:
 - **Progressive enhancement** with JavaScript features
 - **Touch-optimized** interactions and button sizing
 
-## 🎨 Brand & Design
-
-**Color Palette:**
-- **Cream** (`#F5F1E8`) - Warm, inviting background
-- **Sage Green** (`#7B8A72`) - Natural, sustainable primary color
-- **Blood Orange** (`#E85A2B`) - Vibrant accent for calls-to-action
-- **Lemon Cream** (`#F5E6A8`) - Subtle highlight color
-
-**Typography:**
-- **Playfair Display** - Elegant serif for headings and branding
-- **Inter** - Clean sans-serif for body text and UI elements
 
 ## 📄 License
 
