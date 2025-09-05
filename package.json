@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
+    "@vercel/analytics": "^1.5.0",
     "cheerio": "^1.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.518.0",
