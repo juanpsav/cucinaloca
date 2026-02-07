@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 
 interface PlaceResult {
@@ -11,10 +11,14 @@ interface PlaceResult {
 export const useGooglePlaces = (apiKey: string) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const isLoadingRef = useRef(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
 
-  useEffect(() => {
+  const loadMapsApi = useCallback(() => {
+    if (isLoaded || isLoadingRef.current || !apiKey) return;
+
+    isLoadingRef.current = true;
     const loader = new Loader({
       apiKey,
       version: 'weekly',
@@ -23,8 +27,12 @@ export const useGooglePlaces = (apiKey: string) => {
 
     loader.load().then(() => {
       setIsLoaded(true);
+      isLoadingRef.current = false;
+    }).catch((error) => {
+      console.error('Error loading Google Maps:', error);
+      isLoadingRef.current = false;
     });
-  }, [apiKey]);
+  }, [apiKey, isLoaded]);
 
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
@@ -63,5 +71,6 @@ export const useGooglePlaces = (apiKey: string) => {
     isLoaded,
     selectedPlace,
     setSelectedPlace,
+    loadMapsApi,
   };
 }; 

@@ -5,6 +5,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Simple in-memory LRU cache for recipe analysis
+// Key format: recipeName:city:month
+const analysisCache = new Map<string, RecipeAnalysis>();
+const MAX_CACHE_SIZE = 100;
+
 interface RecipeAnalysis {
   techniqueAnalysis: {
     appreciate: string;
@@ -44,13 +49,28 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ 
-        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.' 
+      return NextResponse.json({
+        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.'
       }, { status: 401 });
     }
 
     // Get current month for seasonal considerations
     const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+
+    // Create cache key (recipe:city:month for seasonal sensitivity)
+    const cacheKey = `${recipe.name}:${city}:${currentMonth}`;
+
+    // Check cache first
+    if (analysisCache.has(cacheKey)) {
+      console.log('Serving analysis from cache:', cacheKey);
+      return NextResponse.json({
+        analysis: analysisCache.get(cacheKey)
+      }, {
+        headers: {
+          'X-Cache': 'HIT',
+        }
+      });
+    }
     
     const prompt = `You are a professional chef specializing in recipe analysis and improvement. 
 You will analyze recipes focusing on techniques that professional chefs would appreciate or critique, 
@@ -128,11 +148,22 @@ Analyze this recipe with these criteria:
     // Parse the markdown response into structured data
     const analysis = parseAnalysisResponse(responseContent);
 
-    return NextResponse.json({ 
+    // Cache the analysis (LRU eviction)
+    analysisCache.set(cacheKey, analysis);
+    if (analysisCache.size > MAX_CACHE_SIZE) {
+      const firstKey = analysisCache.keys().next().value;
+      if (firstKey) analysisCache.delete(firstKey);
+    }
+
+    return NextResponse.json({
       analysis,
       location: city,
       region: region || null,
       month: currentMonth
+    }, {
+      headers: {
+        'X-Cache': 'MISS',
+      }
     });
 
   } catch (error) {

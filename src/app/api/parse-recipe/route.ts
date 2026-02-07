@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { Recipe } from '@/app/types/recipe';
 
+// Simple in-memory LRU cache for parsed recipes
+const recipeCache = new Map<string, Recipe>();
+const MAX_CACHE_SIZE = 100;
+
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
-    
+
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
@@ -15,6 +19,19 @@ export async function POST(request: NextRequest) {
       new URL(url);
     } catch {
       return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+    }
+
+    // Check cache first
+    if (recipeCache.has(url)) {
+      console.log('Serving recipe from cache:', url);
+      return NextResponse.json({ recipe: recipeCache.get(url) }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'X-Cache': 'HIT',
+        }
+      });
     }
 
     // Fetch the webpage with timeout
@@ -62,11 +79,19 @@ export async function POST(request: NextRequest) {
       // Add the original URL to the recipe
       recipe.url = url;
 
+      // Cache the parsed recipe (LRU eviction)
+      recipeCache.set(url, recipe);
+      if (recipeCache.size > MAX_CACHE_SIZE) {
+        const firstKey = recipeCache.keys().next().value;
+        if (firstKey) recipeCache.delete(firstKey);
+      }
+
       return NextResponse.json({ recipe }, {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'POST',
           'Access-Control-Allow-Headers': 'Content-Type',
+          'X-Cache': 'MISS',
         }
       });
     } catch (fetchError) {

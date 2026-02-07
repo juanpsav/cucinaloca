@@ -5,6 +5,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Simple in-memory LRU cache for review summaries
+// Key format: recipe name
+const reviewsCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 100;
+
 export async function POST(request: NextRequest) {
   try {
     const { recipe } = await request.json();
@@ -21,6 +26,20 @@ export async function POST(request: NextRequest) {
         { error: 'OpenAI API key is not configured' },
         { status: 500 }
       );
+    }
+
+    // Check cache first
+    const cacheKey = recipe.name;
+    if (reviewsCache.has(cacheKey)) {
+      console.log('Serving reviews from cache:', cacheKey);
+      return NextResponse.json({
+        summary: reviewsCache.get(cacheKey),
+        success: true
+      }, {
+        headers: {
+          'X-Cache': 'HIT',
+        }
+      });
     }
 
     // Simple prompt for generating a review summary
@@ -55,9 +74,22 @@ Write a single flowing paragraph like: "User reviews generally praise the recipe
       );
     }
 
+    const trimmedSummary = summary.trim();
+
+    // Cache the review summary (LRU eviction)
+    reviewsCache.set(cacheKey, trimmedSummary);
+    if (reviewsCache.size > MAX_CACHE_SIZE) {
+      const firstKey = reviewsCache.keys().next().value;
+      if (firstKey) reviewsCache.delete(firstKey);
+    }
+
     return NextResponse.json({
-      summary: summary.trim(),
+      summary: trimmedSummary,
       success: true
+    }, {
+      headers: {
+        'X-Cache': 'MISS',
+      }
     });
 
   } catch (error) {

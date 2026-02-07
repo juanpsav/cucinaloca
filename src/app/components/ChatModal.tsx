@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { X, Send, Loader2, RotateCcw, Clock, Flame, Utensils, Leaf, Bot } from 'lucide-react';
 import { Recipe } from '../types/recipe';
 
@@ -23,7 +23,7 @@ const promptSuggestions = [
   { icon: Leaf, text: "How can I make this vegetarian?" }
 ];
 
-export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
+const ChatModal = memo(function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -46,6 +46,48 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
     if (isOpen) {
       inputRef.current?.focus();
     }
+  }, [isOpen]);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Focus trapping for accessibility
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const modal = document.querySelector('[role="dialog"]');
+    if (!modal) return;
+
+    const focusableElements = modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstEl = focusableElements[0] as HTMLElement;
+    const lastEl = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    firstEl?.focus();
+
+    return () => document.removeEventListener('keydown', handleTab);
   }, [isOpen]);
 
   const resetChat = () => {
@@ -137,30 +179,37 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
       />
       
       {/* Modal - Branded styling */}
-      <div className="relative w-full max-w-3xl h-[80vh] bg-cream rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chat-modal-title"
+        className="relative w-full max-w-3xl h-[70vh] sm:h-[80vh] bg-cream rounded-soft shadow-2xl flex flex-col overflow-hidden"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-sage-green/20 bg-gradient-to-r from-cream to-lemon-cream/30">
           <div className="flex items-center gap-3">
             {/* Robot Avatar - branded colors */}
-            <div className="w-8 h-8 bg-sage-green rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-sage-green rounded-full flex items-center justify-center">
               <Bot className="h-4 w-4 text-cream" />
             </div>
             <div>
-              <h2 className="font-playfair text-lg font-bold text-sage-green">Recipe Assistant</h2>
+              <h2 id="chat-modal-title" className="font-playfair text-lg font-bold text-sage-green">Recipe Assistant</h2>
               <p className="text-xs text-sage-green/70">Powered by OpenAI</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={resetChat}
-              className="p-1.5 hover:bg-sage-green/10 rounded-lg transition-colors group"
+              className="p-1.5 hover:bg-sage-green/10 rounded-full transition-colors group"
               title="Reset chat"
+              aria-label="Reset chat"
             >
               <RotateCcw className="h-4 w-4 text-sage-green/70 group-hover:text-sage-green" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-sage-green/10 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-sage-green/10 rounded-full transition-colors"
+              aria-label="Close chat"
             >
               <X className="h-5 w-5 text-sage-green/70 hover:text-sage-green" />
             </button>
@@ -176,12 +225,12 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
                 className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {message.role === 'assistant' && (
-                  <div className="w-7 h-7 bg-sage-green rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-7 h-7 bg-sage-green rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="h-3.5 w-3.5 text-cream" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] rounded-xl px-3 py-2 ${
+                  className={`max-w-[75%] rounded-soft px-3 py-2 ${
                     message.role === 'user'
                       ? 'bg-blood-orange text-cream ml-auto'
                       : 'bg-white border border-sage-green/20 text-sage-green shadow-sm'
@@ -198,7 +247,7 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
                   </div>
                 </div>
                 {message.role === 'user' && (
-                  <div className="w-7 h-7 bg-sage-green/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-7 h-7 bg-sage-green/20 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <span className="text-sage-green font-bold text-xs">U</span>
                   </div>
                 )}
@@ -207,10 +256,10 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
             
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="w-7 h-7 bg-sage-green rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 bg-sage-green rounded-full flex items-center justify-center flex-shrink-0">
                   <Bot className="h-3.5 w-3.5 text-cream" />
                 </div>
-                <div className="bg-white border border-sage-green/20 rounded-xl px-3 py-2 shadow-sm">
+                <div className="bg-white border border-sage-green/20 rounded-soft px-3 py-2 shadow-sm">
                   <div className="flex items-center gap-2 text-sage-green text-sm">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     <span>Thinking...</span>
@@ -256,13 +305,15 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask about this recipe..."
-                className="flex-1 px-3 py-2 text-sm border border-sage-green/30 rounded-lg focus:ring-2 focus:ring-sage-green/50 focus:border-sage-green transition-all text-sage-green placeholder-sage-green/50 bg-white"
+                aria-label="Type your message"
+                className="flex-1 px-3 py-2 text-sm border border-sage-green/30 rounded-full focus:ring-2 focus:ring-sage-green/50 focus:border-sage-green transition-all text-sage-green placeholder-sage-green/50 bg-white"
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={!inputMessage.trim() || isLoading}
-                className="px-4 py-2 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[50px]"
+                className="px-4 py-2 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[50px]"
+                aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -272,4 +323,6 @@ export default function ChatModal({ isOpen, onClose, recipe }: ChatModalProps) {
       </div>
     </div>
   );
-} 
+});
+
+export default ChatModal; 

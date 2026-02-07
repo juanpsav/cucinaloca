@@ -23,8 +23,14 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-      title: "Cucina Loca - Local Ingredient Suggestions",
-  description: "Refine your recipes with local ingredient alternatives based on your location",
+  title: "Cucina Loca - Local Ingredient Alternatives for Any Recipe",
+  description: "Discover local, seasonal ingredient alternatives for any recipe based on your location. AI-powered chef analysis and cooking assistant.",
+  openGraph: {
+    title: "Cucina Loca",
+    description: "Smarter recipes, rooted in your region.",
+    type: "website",
+  },
+  metadataBase: new URL('https://cucinaloca.com'),
 };
 
 export default function RootLayout({
