@@ -14,11 +14,10 @@
   --font-display: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark mode colors - controlled by class, not media query */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
