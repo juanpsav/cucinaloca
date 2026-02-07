@@ -239,7 +239,7 @@ export default function RecipeForm() {
     <>
       {/* Input Form */}
       <div
-        className="animate-fade-up opacity-0"
+        className="w-full max-w-lg px-5 xl:px-0 mx-auto animate-fade-up opacity-0"
         style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
       >
         <form onSubmit={handleSubmit} className="space-y-3">
