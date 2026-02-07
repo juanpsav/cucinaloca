@@ -150,17 +150,28 @@ function extractFromJsonLd($: cheerio.CheerioAPI): Recipe | null {
   return null;
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
+}
+
 function parseJsonLdRecipe(data: Record<string, unknown>): Recipe {
-  const name = typeof data.name === 'string' ? data.name : 'Untitled Recipe';
-  const description = typeof data.description === 'string' ? data.description : undefined;
+  const name = typeof data.name === 'string' ? decodeHtmlEntities(data.name) : 'Untitled Recipe';
+  const description = typeof data.description === 'string' ? decodeHtmlEntities(data.description) : undefined;
   const prepTime = typeof data.prepTime === 'string' ? formatTime(data.prepTime) : undefined;
   const cookTime = typeof data.cookTime === 'string' ? formatTime(data.cookTime) : undefined;
   const totalTime = typeof data.totalTime === 'string' ? formatTime(data.totalTime) : undefined;
   const servings = data.recipeYield ? String(data.recipeYield) : undefined;
   
-  const ingredients = Array.isArray(data.recipeIngredient) 
-    ? data.recipeIngredient.filter((item): item is string => typeof item === 'string')
-    : typeof data.recipeIngredient === 'string' ? [data.recipeIngredient] : [];
+  const ingredients = Array.isArray(data.recipeIngredient)
+    ? data.recipeIngredient.filter((item): item is string => typeof item === 'string').map(decodeHtmlEntities)
+    : typeof data.recipeIngredient === 'string' ? [decodeHtmlEntities(data.recipeIngredient)] : [];
   
   const instructions = parseInstructions(data.recipeInstructions);
   
@@ -189,24 +200,24 @@ function extractFromMicrodata($: cheerio.CheerioAPI): Recipe | null {
   const recipeEl = $('[itemtype*="Recipe"]').first();
   if (!recipeEl.length) return null;
 
-  const name = recipeEl.find('[itemprop="name"]').first().text().trim();
+  const name = decodeHtmlEntities(recipeEl.find('[itemprop="name"]').first().text().trim());
   if (!name) return null;
 
   const ingredients: string[] = [];
   recipeEl.find('[itemprop="recipeIngredient"]').each((_, el) => {
-    const ingredient = $(el).text().trim();
+    const ingredient = decodeHtmlEntities($(el).text().trim());
     if (ingredient) ingredients.push(ingredient);
   });
 
   const instructions: string[] = [];
   recipeEl.find('[itemprop="recipeInstructions"]').each((_, el) => {
-    const instruction = $(el).text().trim();
+    const instruction = decodeHtmlEntities($(el).text().trim());
     if (instruction) instructions.push(instruction);
   });
 
   return {
     name,
-    description: recipeEl.find('[itemprop="description"]').first().text().trim() || undefined,
+    description: decodeHtmlEntities(recipeEl.find('[itemprop="description"]').first().text().trim()) || undefined,
     prepTime: recipeEl.find('[itemprop="prepTime"]').first().attr('datetime') || 
               recipeEl.find('[itemprop="prepTime"]').first().text().trim() || undefined,
     cookTime: recipeEl.find('[itemprop="cookTime"]').first().attr('datetime') || 
@@ -233,7 +244,7 @@ function extractFromHtmlPatterns($: cheerio.CheerioAPI): Recipe | null {
   
   let name = '';
   for (const selector of titleSelectors) {
-    const title = $(selector).first().text().trim();
+    const title = decodeHtmlEntities($(selector).first().text().trim());
     if (title && title.length > 3) {
       name = title;
       break;
@@ -256,7 +267,7 @@ function extractFromHtmlPatterns($: cheerio.CheerioAPI): Recipe | null {
 
   for (const selector of ingredientSelectors) {
     $(selector).each((_, el) => {
-      const ingredient = $(el).text().trim();
+      const ingredient = decodeHtmlEntities($(el).text().trim());
       if (ingredient && ingredient.length > 2 && !ingredients.includes(ingredient)) {
         ingredients.push(ingredient);
       }
@@ -278,7 +289,7 @@ function extractFromHtmlPatterns($: cheerio.CheerioAPI): Recipe | null {
 
   for (const selector of instructionSelectors) {
     $(selector).each((_, el) => {
-      const instruction = $(el).text().trim();
+      const instruction = decodeHtmlEntities($(el).text().trim());
       if (instruction && instruction.length > 10 && !instructions.includes(instruction)) {
         instructions.push(instruction);
       }
@@ -301,25 +312,25 @@ function extractFromHtmlPatterns($: cheerio.CheerioAPI): Recipe | null {
 
 function parseInstructions(instructions: unknown): string[] {
   if (!instructions) return [];
-  
+
   if (Array.isArray(instructions)) {
     return instructions.map(instruction => {
-      if (typeof instruction === 'string') return instruction;
+      if (typeof instruction === 'string') return decodeHtmlEntities(instruction);
       if (typeof instruction === 'object' && instruction !== null) {
-        if ('text' in instruction && typeof instruction.text === 'string') return instruction.text;
-        if ('name' in instruction && typeof instruction.name === 'string') return instruction.name;
+        if ('text' in instruction && typeof instruction.text === 'string') return decodeHtmlEntities(instruction.text);
+        if ('name' in instruction && typeof instruction.name === 'string') return decodeHtmlEntities(instruction.name);
       }
-      return String(instruction);
+      return decodeHtmlEntities(String(instruction));
     }).filter(Boolean);
   }
-  
-  if (typeof instructions === 'string') return [instructions];
+
+  if (typeof instructions === 'string') return [decodeHtmlEntities(instructions)];
   if (typeof instructions === 'object' && instructions !== null) {
-    if ('text' in instructions && typeof instructions.text === 'string') return [instructions.text];
-    if ('name' in instructions && typeof instructions.name === 'string') return [instructions.name];
+    if ('text' in instructions && typeof instructions.text === 'string') return [decodeHtmlEntities(instructions.text)];
+    if ('name' in instructions && typeof instructions.name === 'string') return [decodeHtmlEntities(instructions.name)];
   }
-  
-  return [String(instructions)];
+
+  return [decodeHtmlEntities(String(instructions))];
 }
 
 function formatTime(time: string | undefined): string | undefined {
