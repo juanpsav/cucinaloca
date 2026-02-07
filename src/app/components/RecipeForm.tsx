@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle, ChevronUp, ChevronDown, ChefHat, Calendar, MapPin, UtensilsCrossed, Citrus, Star, Check } from 'lucide-react';
+import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { Recipe, ParseRecipeResponse, ParseRecipeError, RecipeAnalysis, UnifiedAnalysisResponse } from '../types/recipe';
 import ReviewsSummary from './ReviewsSummary';
@@ -218,7 +218,7 @@ export default function RecipeForm() {
     if (!recipe) return null;
     return recipe.ingredients.map((ingredient, index) => (
       <li key={index} className="flex items-start gap-2">
-        <Check className="h-3.5 w-3.5 text-sage-green mt-0.5 flex-shrink-0 drop-shadow-sm" />
+        <span className="text-sage-green">✓</span>
         <span>{ingredient}</span>
       </li>
     ));
@@ -254,7 +254,7 @@ export default function RecipeForm() {
                 onChange={(e) => setRecipeUrl(e.target.value)}
                 placeholder="Recipe URL..."
                 aria-label="Recipe URL"
-                className="w-full px-3 py-2 text-sm border border-sage-green/30 rounded-full focus:ring-2 focus:ring-sage-green focus:border-transparent transition-all text-sage-green placeholder-sage-green/50 bg-white shadow-sm hover:shadow-md"
+                className="w-full px-3 py-2 text-sm border border-sage-green/30 rounded-lg focus:ring-2 focus:ring-sage-green focus:border-transparent transition-all text-sage-green placeholder-sage-green/50 bg-white shadow-sm hover:shadow-md"
                 required
                 autoComplete="off"
               />
@@ -270,7 +270,7 @@ export default function RecipeForm() {
                 onFocus={loadMapsApi}
                 placeholder={isLoaded ? "Your city..." : "Click to start typing your city..."}
                 aria-label="City"
-                className="w-full px-3 py-2 text-sm border border-sage-green/30 rounded-full focus:ring-2 focus:ring-sage-green focus:border-transparent transition-all text-sage-green placeholder-sage-green/50 bg-white shadow-sm hover:shadow-md"
+                className="w-full px-3 py-2 text-sm border border-sage-green/30 rounded-lg focus:ring-2 focus:ring-sage-green focus:border-transparent transition-all text-sage-green placeholder-sage-green/50 bg-white shadow-sm hover:shadow-md"
                 required
                 autoComplete="off"
               />
@@ -281,7 +281,7 @@ export default function RecipeForm() {
           <button
             type="submit"
             disabled={isLoading || !recipeUrl.trim() || !city.trim() || !isLoaded}
-            className="w-full group flex items-center justify-center space-x-2 rounded-full border border-sage-green bg-sage-green px-4 py-2.5 text-sm text-white transition-colors hover:bg-white hover:text-sage-green disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sage-green disabled:hover:text-white"
+            className="w-full group flex items-center justify-center space-x-2 rounded-lg border border-sage-green bg-sage-green px-4 py-2.5 text-sm text-white transition-colors hover:bg-white hover:text-sage-green disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sage-green disabled:hover:text-white"
           >
             {isLoading ? (
               <span role="status" aria-live="polite" className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export default function RecipeForm() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Original Recipe Card */}
             <div
-              className="bg-white rounded-lg border border-sage-green/20 shadow-sm overflow-hidden texture-overlay"
+              className="bg-white rounded-lg border border-sage-green/20 shadow-sm overflow-hidden"
               style={{
                 maxHeight: isRecipeExpanded ? 'none' : `${localAlternativesHeight}px`,
                 transition: 'max-height 0.3s ease-in-out',
@@ -413,7 +413,7 @@ export default function RecipeForm() {
               <div className="border-t border-gray-100 p-2 flex justify-center">
                 <button
                   onClick={handleExpandToggle}
-                  className="flex items-center gap-1 text-xs text-sage-green hover:text-sage-green/70 transition-colors px-3 py-1.5 rounded-full hover:bg-sage-green/5"
+                  className="flex items-center gap-1 text-xs text-sage-green hover:text-sage-green/70 transition-colors px-3 py-1.5 rounded-lg hover:bg-sage-green/5"
                 >
                   {isRecipeExpanded ? (
                     <>
@@ -431,24 +431,24 @@ export default function RecipeForm() {
             </div>
 
             {/* Local Suggestions */}
-            <div ref={localAlternativesRef} className="bg-white rounded-lg border border-sage-green/20 shadow-sm texture-overlay">
+            <div ref={localAlternativesRef} className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
               <div className="p-4 border-b border-gray-100">
                 <h2 className="font-playfair text-lg font-bold text-sage-green-dark flex items-center gap-2">
-                  <ChefHat className="h-5 w-5 text-blood-orange drop-shadow-sm" />
+                  🧑‍🍳
                   <span>Local Alternatives</span>
                 </h2>
                 <p className="text-gray-600 text-xs mt-1">
-                  <span className="font-medium">Location:</span> {city}
+                  <span className="font-medium">📍 Location:</span> {city}
                 </p>
               </div>
 
               <div className="p-3">
                 {analysisLoading && (
                   <div className="space-y-2" role="status" aria-live="polite">
-                    <SkeletonCard lines={3} className="p-3 rounded-soft bg-gray-50 border border-sage-green/20" />
-                    <SkeletonCard lines={3} className="p-3 rounded-soft bg-gray-50 border border-sage-green/20" />
-                    <SkeletonCard lines={3} className="p-3 rounded-soft bg-gray-50 border border-sage-green/20" />
-                    <SkeletonCard lines={3} className="p-3 rounded-soft bg-gray-50 border border-sage-green/20" />
+                    <SkeletonCard lines={3} className="p-3 rounded-lg bg-gray-50 border border-sage-green/20" />
+                    <SkeletonCard lines={3} className="p-3 rounded-lg bg-gray-50 border border-sage-green/20" />
+                    <SkeletonCard lines={3} className="p-3 rounded-lg bg-gray-50 border border-sage-green/20" />
+                    <SkeletonCard lines={3} className="p-3 rounded-lg bg-gray-50 border border-sage-green/20" />
                   </div>
                 )}
 
@@ -462,72 +462,36 @@ export default function RecipeForm() {
 
                 {/* Display Analysis */}
                 {recipeAnalysis && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {/* Avoiding Processed */}
                     {recipeAnalysis.substitutions.avoidingProcessed && (
-                      <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border-l-4 border-emerald-500 rounded-soft p-3 shadow-sm hover:shadow-md transition-shadow animate-slide-in animate-delay-100">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="bg-emerald-100 rounded-full p-1.5">
-                              <Check className="h-4 w-4 text-emerald-600 drop-shadow-sm" />
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-emerald-900 text-sm mb-1">Avoiding Processed Foods</h4>
-                            <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.avoidingProcessed}</p>
-                          </div>
-                        </div>
+                      <div className="bg-white border border-sage-green/20 rounded-lg p-3 shadow-sm">
+                        <h4 className="font-medium text-sage-green text-sm mb-1">✓ Avoiding Processed Foods</h4>
+                        <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.avoidingProcessed}</p>
                       </div>
                     )}
 
                     {/* Seasonal Substitutions */}
                     {recipeAnalysis.substitutions.seasonal.length > 0 && (
-                      <div className="bg-gradient-to-br from-lemon-cream/30 to-amber-50/50 border-l-4 border-amber-500 rounded-soft p-3 shadow-sm hover:shadow-md transition-shadow animate-slide-in animate-delay-200">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="bg-amber-100 rounded-full p-1.5">
-                              <Calendar className="h-4 w-4 text-amber-600 drop-shadow-sm" />
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-amber-900 text-sm mb-1">Seasonal Ingredients</h4>
-                            <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.seasonal[0]}</p>
-                          </div>
-                        </div>
+                      <div className="bg-white border border-sage-green/20 rounded-lg p-3 shadow-sm">
+                        <h4 className="font-medium text-sage-green text-sm mb-1">📅 Seasonal Ingredients</h4>
+                        <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.seasonal[0]}</p>
                       </div>
                     )}
 
                     {/* Hyper Local Substitutions */}
                     {recipeAnalysis.substitutions.hyperLocal.length > 0 && (
-                      <div className="bg-gradient-to-br from-blood-orange/5 to-terracotta/5 border-l-4 border-blood-orange rounded-soft p-3 shadow-sm hover:shadow-md transition-shadow animate-slide-in animate-delay-300">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="bg-blood-orange/10 rounded-full p-1.5">
-                              <MapPin className="h-4 w-4 text-blood-orange drop-shadow-sm" />
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-blood-orange-dark text-sm mb-1">Local Ingredients ({city.split(',')[0]})</h4>
-                            <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.hyperLocal[0]}</p>
-                          </div>
-                        </div>
+                      <div className="bg-white border border-sage-green/20 rounded-lg p-3 shadow-sm">
+                        <h4 className="font-medium text-sage-green text-sm mb-1">📍 Local Ingredients ({city.split(',')[0]})</h4>
+                        <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.hyperLocal[0]}</p>
                       </div>
                     )}
 
                     {/* Regional Substitutions */}
                     {recipeAnalysis.substitutions.regional.length > 0 && (
-                      <div className="bg-gradient-to-br from-sage-green/5 to-earth-brown/5 border-l-4 border-sage-green rounded-soft p-3 shadow-sm hover:shadow-md transition-shadow animate-slide-in animate-delay-400">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="bg-sage-green/10 rounded-full p-1.5">
-                              <MapPin className="h-4 w-4 text-sage-green drop-shadow-sm" />
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-sage-green-dark text-sm mb-1">Regional Ingredients ({city.split(',').slice(1).join(',').trim() || 'region'})</h4>
-                            <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.regional[0]}</p>
-                          </div>
-                        </div>
+                      <div className="bg-white border border-sage-green/20 rounded-lg p-3 shadow-sm">
+                        <h4 className="font-medium text-sage-green text-sm mb-1">🗺️ Regional Ingredients ({city.split(',').slice(1).join(',').trim() || 'region'})</h4>
+                        <p className="text-gray-700 text-xs leading-relaxed">{recipeAnalysis.substitutions.regional[0]}</p>
                       </div>
                     )}
                   </div>
@@ -545,10 +509,10 @@ export default function RecipeForm() {
           {recipeAnalysis && (
             <div className="mt-8 space-y-6">
               {/* The Chef's Perspective */}
-              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm texture-overlay">
+              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="font-playfair text-lg font-bold text-sage-green-dark flex items-center gap-2">
-                    <ChefHat className="h-5 w-5 text-blood-orange drop-shadow-sm" />
+                    👨‍🍳
                     <span>The Chef&apos;s Perspective</span>
                   </h2>
                 </div>
@@ -559,10 +523,9 @@ export default function RecipeForm() {
                     {recipeAnalysis ? (
                       <div className="space-y-3">
                         {/* Technique to Appreciate */}
-                        <div className="bg-cream/50 border-l-4 border-sage-green rounded-lg p-3 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-sage-green/5 to-transparent pointer-events-none"></div>
-                          <div className="flex items-start gap-2 relative z-10">
-                            <UtensilsCrossed className="h-4 w-4 text-sage-green flex-shrink-0 mt-0.5 drop-shadow-sm" />
+                        <div className="bg-cream/50 border-l-4 border-sage-green rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-sage-green">🔪</span>
                             <div>
                               <h4 className="font-medium text-sage-green text-sm mb-1">Technique</h4>
                               <p className="font-lora italic text-gray-700 text-xs leading-relaxed">{recipeAnalysis.techniqueAnalysis.appreciate.replace(/\s*\*\s*$/, '')}</p>
@@ -571,10 +534,9 @@ export default function RecipeForm() {
                         </div>
 
                         {/* Chef's Flavor Feedback */}
-                        <div className="bg-cream/20 border-l-4 border-sage-green/70 rounded-lg p-3 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(123,138,114,0.03)_0%,transparent_50%)] pointer-events-none"></div>
-                          <div className="flex items-start gap-2 relative z-10">
-                            <Citrus className="h-4 w-4 text-lemon-cream flex-shrink-0 mt-0.5 drop-shadow-sm" style={{filter: 'brightness(0.8)'}} />
+                        <div className="bg-cream/20 border-l-4 border-sage-green/70 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-amber-600">🍋</span>
                             <div>
                               <h4 className="font-medium text-sage-green text-sm mb-1">Chef&apos;s Flavor Feedback</h4>
                               <p className="font-lora italic text-gray-700 text-xs leading-relaxed">{recipeAnalysis.flavorPairings.chefFeedback}</p>
@@ -596,10 +558,9 @@ export default function RecipeForm() {
                     {recipeAnalysis ? (
                       <div className="space-y-3">
                         {/* Technique to Improve */}
-                        <div className="bg-gray-100/50 border-l-4 border-gray-400 rounded-lg p-3 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-gray-400/5 to-transparent pointer-events-none"></div>
-                          <div className="flex items-start gap-2 relative z-10">
-                            <UtensilsCrossed className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5 drop-shadow-sm" />
+                        <div className="bg-gray-100/50 border-l-4 border-gray-400 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">🔪</span>
                             <div>
                               <h4 className="font-medium text-gray-700 text-sm mb-1">Technique</h4>
                               <p className="text-gray-600 text-xs leading-relaxed">{recipeAnalysis.techniqueAnalysis.improve}</p>
@@ -608,10 +569,9 @@ export default function RecipeForm() {
                         </div>
 
                         {/* Suggested Enhancement */}
-                        <div className="bg-gray-100/30 border-l-4 border-gray-400/70 rounded-lg p-3 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(107,114,128,0.03)_0%,transparent_50%)] pointer-events-none"></div>
-                          <div className="flex items-start gap-2 relative z-10">
-                            <Citrus className="h-4 w-4 text-gray-500/70 flex-shrink-0 mt-0.5 drop-shadow-sm" />
+                        <div className="bg-gray-100/30 border-l-4 border-gray-400/70 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">🍋</span>
                             <div>
                               <h4 className="font-medium text-gray-700 text-sm mb-1">Flavor Enhancement</h4>
                               <p className="text-gray-600 text-xs leading-relaxed">{recipeAnalysis.flavorPairings.enhancement}</p>
@@ -630,10 +590,10 @@ export default function RecipeForm() {
               </div>
 
               {/* User Reviews */}
-              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm texture-overlay">
+              <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="font-playfair text-lg font-bold text-sage-green-dark flex items-center gap-2">
-                    <Star className="h-5 w-5 text-amber-500 fill-amber-500 drop-shadow-sm" />
+                    ⭐
                     <span>User Reviews</span>
                   </h2>
                 </div>
@@ -650,7 +610,7 @@ export default function RecipeForm() {
       {recipe && (
         <button
           onClick={() => setIsChatModalOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm group"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm group"
           title="Ask about this recipe"
         >
           <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 group-hover:scale-110 transition-transform" />

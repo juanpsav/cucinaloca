@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <div className="min-h-screen relative flex flex-col">
       {/* Brand Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cream via-cream to-lemon-cream/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 texture-overlay transition-colors" />
+      <div className="absolute inset-0 bg-gradient-to-br from-cream via-cream to-lemon-cream/30" />
 
       <Header />
 

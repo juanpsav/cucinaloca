@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Lora } from "next/font/google";
 import { Analytics } from '@vercel/analytics/next';
-import { ThemeProvider } from './contexts/ThemeContext';
 import "./globals.css";
 
 const inter = Inter({
@@ -40,12 +39,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={`${inter.variable} ${playfairDisplay.variable} ${lora.variable} font-sans antialiased`}>
-        <ThemeProvider>
-          {children}
-          <Analytics />
-        </ThemeProvider>
+        {children}
+        <Analytics />
       </body>
     </html>
   );
