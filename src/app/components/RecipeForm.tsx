@@ -24,7 +24,7 @@ export default function RecipeForm() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [isRecipeExpanded, setIsRecipeExpanded] = useState(false);
   const [localAlternativesHeight, setLocalAlternativesHeight] = useState(256);
-  const [activeTab, setActiveTab] = useState<'recipe' | 'alternatives' | 'chat'>('recipe');
+  const [activeTab, setActiveTab] = useState<'recipe' | 'alternatives' | 'chat'>('alternatives');
 
   const localAlternativesRef = useRef<HTMLDivElement>(null);
   const { inputRef, isLoaded, selectedPlace, setSelectedPlace, loadMapsApi } = useGooglePlaces(GOOGLE_PLACES_API_KEY);
@@ -314,17 +314,6 @@ export default function RecipeForm() {
           {/* Tab Navigation */}
           <div className="flex gap-2 mb-6 border-b border-sage-green/20 overflow-x-auto">
             <button
-              onClick={() => setActiveTab('recipe')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                activeTab === 'recipe'
-                  ? 'text-sage-green border-b-2 border-sage-green'
-                  : 'text-sage-green/60 hover:text-sage-green'
-              }`}
-            >
-              <UtensilsCrossed className="h-4 w-4" />
-              <span>Recipe</span>
-            </button>
-            <button
               onClick={() => setActiveTab('alternatives')}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'alternatives'
@@ -332,8 +321,8 @@ export default function RecipeForm() {
                   : 'text-sage-green/60 hover:text-sage-green'
               }`}
             >
-              🧑‍🍳
-              <span>Alternatives & Analysis</span>
+              👨‍🍳
+              <span>Chef&apos;s Perspective</span>
             </button>
             <button
               onClick={() => setActiveTab('chat')}
@@ -344,7 +333,18 @@ export default function RecipeForm() {
               }`}
             >
               <MessageSquare className="h-4 w-4" />
-              <span>Chat Assistant</span>
+              <span>Ask the Chef</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('recipe')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'recipe'
+                  ? 'text-sage-green border-b-2 border-sage-green'
+                  : 'text-sage-green/60 hover:text-sage-green'
+              }`}
+            >
+              <UtensilsCrossed className="h-4 w-4" />
+              <span>Original Recipe</span>
             </button>
           </div>
 
