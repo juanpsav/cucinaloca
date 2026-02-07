@@ -194,7 +194,6 @@ const ChatModal = memo(function ChatModal({ isOpen, onClose, recipe }: ChatModal
             </div>
             <div>
               <h2 id="chat-modal-title" className="font-playfair text-lg font-bold text-sage-green">Recipe Assistant</h2>
-              <p className="text-xs text-sage-green/70">Powered by OpenAI</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

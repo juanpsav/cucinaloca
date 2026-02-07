@@ -1,17 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, MessageCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, ExternalLink, Clock, Users, AlertCircle, Loader2, ChevronUp, ChevronDown, MessageSquare, UtensilsCrossed } from 'lucide-react';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { Recipe, ParseRecipeResponse, ParseRecipeError, RecipeAnalysis, UnifiedAnalysisResponse } from '../types/recipe';
 import ReviewsSummary from './ReviewsSummary';
 import SkeletonCard from './SkeletonCard';
-
-const ChatModal = dynamic(() => import('./ChatModal'), {
-  loading: () => null,
-});
+import ChatSection from './ChatSection';
 
 const GOOGLE_PLACES_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || '';
 
@@ -28,7 +24,7 @@ export default function RecipeForm() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [isRecipeExpanded, setIsRecipeExpanded] = useState(false);
   const [localAlternativesHeight, setLocalAlternativesHeight] = useState(256);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'recipe' | 'alternatives' | 'chat'>('recipe');
 
   const localAlternativesRef = useRef<HTMLDivElement>(null);
   const { inputRef, isLoaded, selectedPlace, setSelectedPlace, loadMapsApi } = useGooglePlaces(GOOGLE_PLACES_API_KEY);
@@ -315,8 +311,46 @@ export default function RecipeForm() {
       {/* Results Section */}
       {recipe && (
         <div className="w-full max-w-5xl mx-auto px-5 xl:px-0 mt-12 mb-12">
-          {/* Two Column Results Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-6 border-b border-sage-green/20 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('recipe')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'recipe'
+                  ? 'text-sage-green border-b-2 border-sage-green'
+                  : 'text-sage-green/60 hover:text-sage-green'
+              }`}
+            >
+              <UtensilsCrossed className="h-4 w-4" />
+              <span>Recipe</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('alternatives')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'alternatives'
+                  ? 'text-sage-green border-b-2 border-sage-green'
+                  : 'text-sage-green/60 hover:text-sage-green'
+              }`}
+            >
+              🧑‍🍳
+              <span>Alternatives & Analysis</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'chat'
+                  ? 'text-sage-green border-b-2 border-sage-green'
+                  : 'text-sage-green/60 hover:text-sage-green'
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Chat Assistant</span>
+            </button>
+          </div>
+
+          {/* Recipe Tab Content */}
+          {activeTab === 'recipe' && (
+            <div className="grid grid-cols-1 gap-6">
             {/* Original Recipe Card */}
             <div
               className="bg-white rounded-lg border border-sage-green/20 shadow-sm overflow-hidden"
@@ -429,9 +463,14 @@ export default function RecipeForm() {
                 </button>
               </div>
             </div>
+          </div>
+          )}
 
-            {/* Local Suggestions */}
-            <div ref={localAlternativesRef} className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
+          {/* Alternatives Tab Content */}
+          {activeTab === 'alternatives' && (
+            <div>
+              {/* Local Suggestions */}
+              <div ref={localAlternativesRef} className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
               <div className="p-4 border-b border-gray-100">
                 <h2 className="font-playfair text-lg font-bold text-sage-green-dark flex items-center gap-2">
                   🧑‍🍳
@@ -503,10 +542,9 @@ export default function RecipeForm() {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Additional Sections */}
-          {recipeAnalysis && (
+            {/* Additional Sections */}
+            {recipeAnalysis && (
             <div className="mt-8 space-y-6">
               {/* The Chef's Perspective */}
               <div className="bg-white rounded-lg border border-sage-green/20 shadow-sm">
@@ -602,29 +640,15 @@ export default function RecipeForm() {
                 </div>
               </div>
             </div>
+            )}
+          </div>
+          )}
+
+          {/* Chat Tab Content */}
+          {activeTab === 'chat' && (
+            <ChatSection recipe={recipe} />
           )}
         </div>
-      )}
-
-      {/* Floating Chat Button */}
-      {recipe && (
-        <button
-          onClick={() => setIsChatModalOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-blood-orange hover:bg-blood-orange/90 text-cream rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm group"
-          title="Ask about this recipe"
-        >
-          <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 group-hover:scale-110 transition-transform" />
-          <span className="hidden sm:block">Ask about this recipe</span>
-        </button>
-      )}
-
-      {/* Chat Modal */}
-      {recipe && (
-        <ChatModal
-          isOpen={isChatModalOpen}
-          onClose={() => setIsChatModalOpen(false)}
-          recipe={recipe}
-        />
       )}
     </>
   );
