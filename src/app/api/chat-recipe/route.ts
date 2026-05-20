@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: 'OpenAI API key is not configured' },
+        { error: 'Anthropic API key is not configured' },
         { status: 500 }
       );
     }
@@ -48,21 +48,22 @@ You should help users with:
 
 Be helpful, friendly, and provide practical cooking advice. If asked about something completely unrelated to cooking or this recipe, politely redirect the conversation back to culinary topics.`;
 
-    // Build the conversation messages
-    const messages = [
-      { role: 'system', content: systemMessage },
-      ...conversationHistory,
-      { role: 'user', content: message }
-    ];
+    // Build the conversation messages (filter out any system messages from history)
+    const filteredHistory = (conversationHistory as Array<{ role: string; content: string }>)
+      .filter(m => m.role === 'user' || m.role === 'assistant');
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    const completion = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 500,
-      temperature: 0.7,
+      system: systemMessage,
+      messages: [
+        ...filteredHistory as Array<{ role: 'user' | 'assistant'; content: string }>,
+        { role: 'user', content: message },
+      ],
     });
 
-    const assistantMessage = completion.choices[0]?.message?.content;
+    const firstContent = completion.content[0];
+    const assistantMessage = firstContent?.type === 'text' ? firstContent.text : null;
 
     if (!assistantMessage) {
       return NextResponse.json(

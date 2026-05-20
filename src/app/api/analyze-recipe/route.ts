@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 // Simple in-memory LRU cache for recipe analysis
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({
-        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.'
+        error: 'Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables.'
       }, { status: 401 });
     }
 
@@ -123,27 +123,18 @@ Analyze this recipe with these criteria:
 - If local options are limited, suggest the closest regional alternatives or seasonal swaps
 - CRITICAL: Seasonal recommendations must SUBSTITUTE existing ingredients, not add new ones`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a knowledgeable professional chef who provides practical, actionable recipe analysis. Focus on techniques, flavor principles, and local/seasonal ingredient optimization. Always respond with the exact markdown format specified."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
+    const completion = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1500,
+      system: 'You are a knowledgeable professional chef who provides practical, actionable recipe analysis. Focus on techniques, flavor principles, and local/seasonal ingredient optimization. Always respond with the exact markdown format specified.',
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const responseContent = completion.choices[0]?.message?.content;
-    
-    if (!responseContent) {
-      throw new Error('No response from OpenAI');
+    const firstContent = completion.content[0];
+    if (!firstContent || firstContent.type !== 'text') {
+      throw new Error('No response from Anthropic');
     }
+    const responseContent = firstContent.text;
 
     // Parse the markdown response into structured data
     const analysis = parseAnalysisResponse(responseContent);
@@ -171,21 +162,22 @@ Analyze this recipe with these criteria:
     
     // Check for specific OpenAI API errors
     if (error instanceof Error) {
-      if (error.message.includes('API key') || error.message.includes('authentication')) {
-        return NextResponse.json({ 
-          error: 'OpenAI API key not configured. Please add your OpenAI API key to your environment variables.' 
+      if (error.message.includes('API key') || error.message.includes('authentication') || error.message.includes('401')) {
+        return NextResponse.json({
+          error: 'Anthropic API key not configured. Please add your Anthropic API key to your environment variables.'
         }, { status: 401 });
       }
-      
-      if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        return NextResponse.json({ 
-          error: 'OpenAI rate limit exceeded. Please try again later.' 
+
+      if (error.message.includes('rate limit') || error.message.includes('quota') || error.message.includes('429')) {
+        return NextResponse.json({
+          error: 'Anthropic rate limit exceeded. Please try again later.'
         }, { status: 429 });
       }
     }
     
-    return NextResponse.json({ 
-      error: 'Failed to analyze recipe. Please check your API configuration and try again.' 
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({
+      error: `Failed to analyze recipe: ${message}`
     }, { status: 500 });
   }
 }

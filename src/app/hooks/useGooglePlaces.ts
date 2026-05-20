@@ -12,8 +12,15 @@ export const useGooglePlaces = (apiKey: string) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const isLoadingRef = useRef(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const mapsActuallyLoaded = useRef(false);
+  const [isLoaded, setIsLoaded] = useState(!apiKey); // ready immediately if no key
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
+
+  // When apiKey is absent from the start, isLoaded initialises to true above.
+  // If apiKey arrives late (unlikely but safe to handle), sync here.
+  useEffect(() => {
+    if (!apiKey && !isLoaded) setIsLoaded(true);
+  }, [apiKey, isLoaded]);
 
   const loadMapsApi = useCallback(() => {
     if (isLoaded || isLoadingRef.current || !apiKey) return;
@@ -26,26 +33,28 @@ export const useGooglePlaces = (apiKey: string) => {
     });
 
     loader.load().then(() => {
+      mapsActuallyLoaded.current = true;
       setIsLoaded(true);
       isLoadingRef.current = false;
     }).catch((error) => {
       console.error('Error loading Google Maps:', error);
+      // Degrade gracefully — city field still works as plain text
+      setIsLoaded(true);
       isLoadingRef.current = false;
     });
   }, [apiKey, isLoaded]);
 
   useEffect(() => {
-    if (isLoaded && inputRef.current && !autocompleteRef.current) {
-      // Initialize autocomplete with city/locality restrictions
+    // Only initialise autocomplete when Google Maps actually loaded
+    if (isLoaded && mapsActuallyLoaded.current && inputRef.current && !autocompleteRef.current) {
       autocompleteRef.current = new google.maps.places.Autocomplete(
         inputRef.current,
         {
-          types: ['(cities)'], // Restrict to cities only
+          types: ['(cities)'],
           fields: ['formatted_address', 'place_id', 'name', 'address_components'],
         }
       );
 
-      // Listen for place selection
       autocompleteRef.current.addListener('place_changed', () => {
         const place = autocompleteRef.current?.getPlace();
         if (place && place.formatted_address) {
@@ -60,7 +69,7 @@ export const useGooglePlaces = (apiKey: string) => {
     }
 
     return () => {
-      if (autocompleteRef.current) {
+      if (autocompleteRef.current && mapsActuallyLoaded.current) {
         google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
@@ -73,4 +82,4 @@ export const useGooglePlaces = (apiKey: string) => {
     setSelectedPlace,
     loadMapsApi,
   };
-}; 
+};

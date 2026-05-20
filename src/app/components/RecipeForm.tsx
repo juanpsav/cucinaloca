@@ -106,9 +106,9 @@ export default function RecipeForm() {
         const err = analysisResult.reason;
         if (err instanceof Error) {
           if (err.message.includes('API key not configured')) {
-            setAnalysisError('OpenAI API key not configured. Please add your API key to your environment variables.');
+            setAnalysisError('Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables.');
           } else if (err.message.includes('rate limit')) {
-            setAnalysisError('OpenAI rate limit exceeded. Please try again in a few minutes.');
+            setAnalysisError('Rate limit exceeded. Please try again in a few minutes.');
           } else if (err.message.includes('JSON') || err.message.includes('<!DOCTYPE')) {
             setAnalysisError('Server error occurred. Please check your API configuration and try again.');
           } else {
@@ -264,7 +264,7 @@ export default function RecipeForm() {
                 value={city}
                 onChange={handleCityInputChange}
                 onFocus={loadMapsApi}
-                placeholder={isLoaded ? "Your city..." : "Click to start typing your city..."}
+                placeholder="Your city..."
                 aria-label="City"
                 className="w-full px-3 py-2 text-sm border border-sage-green/30 rounded-lg focus:ring-2 focus:ring-sage-green focus:border-transparent transition-all text-sage-green placeholder-sage-green/50 bg-white shadow-sm hover:shadow-md"
                 required
@@ -276,7 +276,7 @@ export default function RecipeForm() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || !recipeUrl.trim() || !city.trim() || !isLoaded}
+            disabled={isLoading || !recipeUrl.trim() || !city.trim()}
             className="w-full group flex items-center justify-center space-x-2 rounded-lg border border-sage-green bg-sage-green px-4 py-2.5 text-sm text-white transition-colors hover:bg-white hover:text-sage-green disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sage-green disabled:hover:text-white"
           >
             {isLoading ? (
