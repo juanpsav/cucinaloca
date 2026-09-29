@@ -38,7 +38,6 @@ export function useChat(session: CookSession, update: SessionUpdater) {
         chat: [...s.chat, user, { id: replyId, role: "assistant", text: "", changes: [], remembered: [], before: { recipe: s.recipe, factor: s.factor } }],
       }));
       setBusy(true);
-      setStatus("Thinking…");
 
       const body: ChatRequest = {
         recipe: s.recipe,

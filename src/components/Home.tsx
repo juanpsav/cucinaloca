@@ -31,10 +31,10 @@ export function Home() {
       <div className="flex flex-1 flex-col justify-center py-16">
         <Logo href={null} />
         <h1 className="mt-6 font-serif text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-6xl">
-          Cook any recipe, your way.
+          Just the recipe.
         </h1>
         <p className="mt-5 max-w-lg text-lg text-muted">
-          Open a recipe in a clean cook view: scale it, time it, and follow along step by step. Nothing is saved: close the tab and it&apos;s gone.
+          Paste a link from any site and cook from a clean page. Change what you need to. Close the tab when you&apos;re done and it&apos;s gone.
         </p>
 
         <form onSubmit={open} className="mt-10 flex items-center gap-2 rounded-full border border-line bg-surface p-1.5 pl-5 shadow-sm focus-within:border-accent">
@@ -61,7 +61,7 @@ export function Home() {
         {error && <p className="mt-2 pl-5 text-sm text-accent">{error}</p>}
 
         <div className="mt-8">
-          <p className="mb-3 text-sm text-muted">No link, or the site won&apos;t open? Use what&apos;s on your screen:</p>
+          <p className="mb-3 text-sm text-muted">No link, or the site won&apos;t open? Add screenshots or paste the text instead.</p>
           <ShareFallback onImported={(recipe) => router.push(`/cook?s=${stashImport(recipe)}`)} compact />
         </div>
       </div>

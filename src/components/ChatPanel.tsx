@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Bookmark, Check, ChefHat, LoaderCircle, RotateCcw, SquarePen, X } from "lucide-react";
+import { ArrowUp, Bookmark, Check, LoaderCircle, RotateCcw, SquarePen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChat, type SessionUpdater } from "@/hooks/useChat";
 import { removePreference, usePreferences } from "@/lib/client/preferences";
@@ -68,17 +68,14 @@ export function ChatPanel({
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <div className="flex items-center gap-2 font-medium">
-            <ChefHat className="size-5 text-accent" />
-            Ask the chef
-          </div>
+          <div className="font-medium">Tweak it</div>
           <div className="flex items-center gap-1">
             {session.chat.length > 0 && (
               <button
                 onClick={newChat}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted hover:bg-surface hover:text-ink disabled:opacity-40"
-                title="Start a new conversation (your recipe changes stay)"
+                title="Clear the chat. Your changes to the recipe stay."
               >
                 <SquarePen className="size-4" />
                 New chat
@@ -107,9 +104,7 @@ export function ChatPanel({
         <div className="flex-1 space-y-4 overflow-y-auto border-t border-line px-5 py-4">
           {session.chat.length === 0 && (
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-muted">
-                Tell me what you have, what you don&apos;t, who you&apos;re cooking for, or what went wrong. I&apos;ll change the recipe for you.
-              </p>
+              <p className="text-sm text-muted">Missing an ingredient, cooking for more people, or stuck on a step? Ask here.</p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
@@ -163,11 +158,13 @@ export function ChatPanel({
             ),
           )}
 
-          {status && (
+          {status ? (
             <p className="flex items-center gap-2 text-sm text-muted">
               <LoaderCircle className="size-4 animate-spin text-accent" />
               {status}
             </p>
+          ) : (
+            busy && !session.chat.at(-1)?.text && <TypingDots />
           )}
           <div ref={endRef} />
         </div>
@@ -191,7 +188,7 @@ export function ChatPanel({
                   submit();
                 }
               }}
-              placeholder={disabled ? "Reading the recipe first…" : "No shallots, I have a leek…"}
+              placeholder={disabled ? "One moment…" : "No shallots, I have a leek…"}
               disabled={disabled}
               className="max-h-32 min-h-9 flex-1 resize-none bg-transparent py-2 text-[16px] outline-none placeholder:text-muted [field-sizing:content]"
             />
@@ -207,5 +204,15 @@ export function ChatPanel({
         </form>
       </aside>
     </>
+  );
+}
+
+function TypingDots() {
+  return (
+    <p className="flex gap-1 py-2" aria-label="Replying">
+      {[0, 150, 300].map((delay) => (
+        <span key={delay} className="size-1.5 animate-bounce rounded-full bg-muted" style={{ animationDelay: `${delay}ms` }} />
+      ))}
+    </p>
   );
 }

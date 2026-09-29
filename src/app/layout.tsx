@@ -7,9 +7,9 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cucina Loca — cook any recipe your way",
+  title: "Cucina Loca",
   description:
-    "Open any recipe in a clean cook view, scale it, time it, and adapt it to what's in your kitchen. Nothing saved, nothing to manage.",
+    "Cook from any recipe online without the clutter, and change it to fit your kitchen.",
 };
 
 export const viewport: Viewport = {

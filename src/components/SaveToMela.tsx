@@ -64,7 +64,7 @@ export function SaveToMela({ session }: { session: CookSession }) {
       ) : (
         <BookmarkPlus className="size-4" />
       )}
-      <span className="hidden sm:inline">{state === "error" ? "Couldn't save, try again" : state === "done" ? "Sent to Mela" : "Save to Mela"}</span>
+      <span className="hidden sm:inline">{state === "error" ? "Couldn't save, try again" : state === "done" ? "Saved" : "Save to Mela"}</span>
     </button>
   );
 }

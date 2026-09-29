@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChefHat, ChevronLeft, ChevronRight, Clock, ExternalLink, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, SlidersHorizontal, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
@@ -265,12 +265,12 @@ function EnrichBadge({ state }: { state: EnrichState }) {
   if (state === "running") {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm text-muted">
-        <Sparkles className="size-4 animate-pulse text-accent" />
-        Reading the recipe…
+        <LoaderCircle className="size-4 animate-spin" />
+        Setting up scaling and timers…
       </span>
     );
   }
-  if (state === "failed") return <span className="text-sm text-muted">Scaling and timers unavailable for this recipe.</span>;
+  if (state === "failed") return <span className="text-sm text-muted">Scaling and timers aren&apos;t available for this one.</span>;
   return null;
 }
 
@@ -404,9 +404,9 @@ function BottomBar({
           </button>
         </div>
         {!chatOpen && (
-          <button onClick={onAsk} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-accent px-4 font-medium whitespace-nowrap text-paper shadow-lg transition hover:brightness-105 sm:px-5">
-            <ChefHat className="size-5" />
-            Ask the chef
+          <button onClick={onAsk} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-accent px-5 font-medium whitespace-nowrap text-paper shadow-lg transition hover:brightness-105">
+            <SlidersHorizontal className="size-4" />
+            Tweak it
           </button>
         )}
         </div>

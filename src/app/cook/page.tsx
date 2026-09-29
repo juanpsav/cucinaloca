@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CookClient, EmbedClient } from "@/components/CookClient";
 
-export const metadata: Metadata = { title: "Cooking — Cucina Loca", robots: { index: false } };
+export const metadata: Metadata = { title: "Cucina Loca", robots: { index: false } };
 
 export default async function CookPage({ searchParams }: PageProps<"/cook">) {
   const params = await searchParams;
