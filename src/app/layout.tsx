@@ -1,49 +1,27 @@
-import type { Metadata } from "next";
-import { Inter, Playfair_Display, Lora } from "next/font/google";
-import { Analytics } from '@vercel/analytics/next';
+import type { Metadata, Viewport } from "next";
+import { Geist, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: 'swap',
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: 'swap',
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  style: ["italic"],
-  variable: "--font-lora",
-  display: 'swap',
-});
+const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cucina Loca - Local Ingredient Alternatives for Any Recipe",
-  description: "Discover local, seasonal ingredient alternatives for any recipe based on your location. AI-powered chef analysis and cooking assistant.",
-  openGraph: {
-    title: "Cucina Loca",
-    description: "Smarter recipes, rooted in your region.",
-    type: "website",
-  },
-  metadataBase: new URL('https://cucinaloca.com'),
+  title: "Cucina Loca — cook any recipe your way",
+  description:
+    "Open any recipe in a clean cook view, scale it, time it, and adapt it to what's in your kitchen. Nothing saved, nothing to manage.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf8f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#15120f" },
+  ],
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${playfairDisplay.variable} ${lora.variable} font-sans antialiased`}>
-        {children}
-        <Analytics />
-      </body>
+    <html lang="en" className={`${geist.variable} ${playfair.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
