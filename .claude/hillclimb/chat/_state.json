@@ -1,0 +1,13 @@
+{
+  "metrics": [
+    { "id": "correct", "label": "Correct edits", "kind": "binary" },
+    { "id": "sound", "label": "Chef approves", "kind": "binary" },
+    { "id": "style", "label": "Style rules", "kind": "binary" },
+    { "id": "human", "label": "Sounds human", "kind": "binary" }
+  ],
+  "perf_fields": [
+    { "id": "latency_s", "label": "Latency", "unit": "s" },
+    { "id": "tool_calls", "label": "Tool calls" },
+    { "id": "reply_words", "label": "Reply words" }
+  ]
+}

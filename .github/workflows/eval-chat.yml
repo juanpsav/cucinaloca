@@ -1,0 +1,32 @@
+name: Eval sous-chef chat
+
+# On demand only: every run makes real API calls (about $0.02 per case, judges included).
+on:
+  workflow_dispatch:
+    inputs:
+      reps:
+        description: "Runs per case"
+        default: "1"
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm run eval:chat -- --variant ci --reps "${{ inputs.reps }}" | tee eval.log
+          { echo '```'; sed -n '/scored runs/,$p' eval.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-chat-results
+          path: .claude/hillclimb/chat/ci/
