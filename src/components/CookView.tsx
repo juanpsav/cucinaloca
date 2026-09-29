@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Minus, Plus, Rot
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
+import { SaveToMela } from "@/components/SaveToMela";
 import type { SessionUpdater } from "@/hooks/useChat";
 import { formatClock, useTimers } from "@/hooks/useTimers";
 import { useWakeLock } from "@/hooks/useWakeLock";
@@ -53,6 +54,7 @@ export function CookView({ session, update, enrichState }: { session: CookSessio
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Logo className="text-xl" />
           <div className="flex items-center gap-1">
+            <SaveToMela session={session} />
             {wake.supported && (
               <button
                 onClick={wake.toggle}
