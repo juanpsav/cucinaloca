@@ -14,6 +14,7 @@
 - **Enrich:** Claude reads the recipe once and returns *templates*: each line with only the amounts that should scale marked (`[[1.5]] cups ([[200]] g) flour`, but not the `14-oz` in `1 (14-oz) can`). It also links each step to its ingredients and finds the timers. Templates are checked word-for-word against the source, so the model can't quietly change the recipe.
 - **Cook:** step focus shows exactly what each step needs, plus one-tap timers and screen wake lock.
 - **Change it:** tell the assistant what you have, what you don't, who you're cooking for. A Claude agent (tool use, streamed) edits the recipe through typed operations: `edit_recipe` (atomic batches of ingredient/step updates; the same pure function validates on the server and applies in the browser), `set_servings` and `remember_preference`. Changes show inline against the original, and each reply can be undone as a unit.
+- **Keep it:** "Save to Mela" exports your version (current scale, edits, groups, a note of what changed, the photo) as a [`.melarecipe`](https://mela.recipes/fileformat/) file: the share sheet on phones, a download on computers.
 
 ## Stack
 
@@ -35,6 +36,6 @@ To try the extension, load `extension/` unpacked at `chrome://extensions` (Devel
 - [x] M0/M1: rebuild, cook view, import from link, screenshots or text
 - [x] M2: chat agent that edits the recipe (swaps, scaling, equipment) with typed patches and diffs
 - [x] M3: iOS Shortcut and Chrome side-panel extension (Web Store listing pending)
-- [ ] M4: Save to Mela
+- [x] M4: Save to Mela
 - [ ] M5: evals
 - [ ] M6: hands-free voice

@@ -66,26 +66,48 @@ export function parseRecipeUrl(input: string): URL {
 
 /** Fetch a recipe page's HTML on behalf of the user, respecting sites that refuse. */
 export async function fetchPage(url: URL): Promise<{ html: string; finalUrl: string }> {
+  const res = await request(url, "text/html,application/xhtml+xml");
+  const type = res.headers.get("content-type") ?? "";
+  if (!/html|xml/i.test(type)) throw new FetchPageError("That link isn't a web page.", "invalid");
+  const html = (await readCapped(res, MAX_BYTES, "That page is too large to read.")).toString("utf8");
+  // Cloudflare-style interstitials come back as 200 on some sites.
+  if (/<title>\s*(Just a moment|Attention Required)/i.test(html)) {
+    throw new FetchPageError(`${url.hostname} doesn't allow Cucina Loca to read its pages.`, "blocked");
+  }
+  return { html, finalUrl: res.url || url.toString() };
+}
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+/** A recipe's photo, for embedding in an export. Same protections as page fetches. */
+export async function fetchImage(url: URL, maxBytes = 3 * 1024 * 1024): Promise<{ data: Buffer; type: string }> {
+  const res = await request(url, IMAGE_TYPES.join(","));
+  const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  if (!IMAGE_TYPES.includes(type)) throw new FetchPageError("That isn't an image.", "invalid");
+  return { data: await readCapped(res, maxBytes, "That image is too large."), type };
+}
+
+async function request(url: URL, accept: string) {
   let res;
   try {
     res = await fetch(url, {
       dispatcher: agent,
       redirect: "follow",
       signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: { "user-agent": USER_AGENT, accept: "text/html,application/xhtml+xml", "accept-language": "en,fr;q=0.8" },
+      headers: { "user-agent": USER_AGENT, accept, "accept-language": "en,fr;q=0.8" },
     });
   } catch (e) {
     const timedOut = e instanceof Error && e.name === "TimeoutError";
     throw new FetchPageError(timedOut ? "The site took too long to respond." : "Couldn't reach that site.", "failed");
   }
-
   if ([401, 402, 403, 429, 451, 503].includes(res.status)) {
     throw new FetchPageError(`${url.hostname} doesn't allow Cucina Loca to read its pages.`, "blocked");
   }
   if (!res.ok) throw new FetchPageError(`The site answered with an error (${res.status}).`, "failed");
-  const type = res.headers.get("content-type") ?? "";
-  if (!/html|xml/i.test(type)) throw new FetchPageError("That link isn't a web page.", "invalid");
+  return res;
+}
 
+async function readCapped(res: Awaited<ReturnType<typeof fetch>>, max: number, tooLarge: string): Promise<Buffer> {
   const reader = res.body!.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -93,16 +115,11 @@ export async function fetchPage(url: URL): Promise<{ html: string; finalUrl: str
     const { done, value } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > MAX_BYTES) {
+    if (size > max) {
       await reader.cancel();
-      throw new FetchPageError("That page is too large to read.", "failed");
+      throw new FetchPageError(tooLarge, "failed");
     }
     chunks.push(value);
   }
-  const html = Buffer.concat(chunks).toString("utf8");
-  // Cloudflare-style interstitials come back as 200 on some sites.
-  if (/<title>\s*(Just a moment|Attention Required)/i.test(html)) {
-    throw new FetchPageError(`${url.hostname} doesn't allow Cucina Loca to read its pages.`, "blocked");
-  }
-  return { html, finalUrl: res.url || url.toString() };
+  return Buffer.concat(chunks);
 }
