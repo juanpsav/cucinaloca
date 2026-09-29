@@ -46,7 +46,7 @@ export async function checkLimit(name: LimitName, request: Request): Promise<Res
   if (success) return null;
   const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
   return Response.json(
-    { error: "You've hit the hourly limit for this free demo. Try again a bit later." },
+    { error: "That's a lot of recipes for one hour. Try again a little later." },
     { status: 429, headers: { "retry-after": String(retryAfter) } },
   );
 }

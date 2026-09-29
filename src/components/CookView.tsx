@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, SlidersHorizontal, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
@@ -25,7 +25,7 @@ export function CookView({ session, update, enrichState }: { session: CookSessio
   const currentIndex = recipe.steps.findIndex((s) => s.id === current);
   const ingredients = useMemo(() => diffList(recipe.ingredients, base?.ingredients ?? null), [recipe.ingredients, base]);
   const steps = useMemo(() => diffList(recipe.steps, base?.steps ?? null), [recipe.steps, base]);
-  const edited = session.chat.some((m) => m.changes.some((c) => !c.undone));
+  const edited = [...ingredients, ...steps].some((d) => d.status !== "same");
 
   const set = (patch: Partial<CookSession>) => update((s) => ({ ...s, ...patch }));
   const goTo = (index: number) => {
@@ -39,6 +39,7 @@ export function CookView({ session, update, enrichState }: { session: CookSessio
             ...s,
             recipe: s.base,
             chat: s.chat.map((m) => ({ ...m, changes: m.changes.map((c) => ({ ...c, undone: true })) })),
+            earlierChanges: [],
           }
         : s,
     );
@@ -264,12 +265,12 @@ function EnrichBadge({ state }: { state: EnrichState }) {
   if (state === "running") {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm text-muted">
-        <Sparkles className="size-4 animate-pulse text-accent" />
-        Reading the recipe…
+        <LoaderCircle className="size-4 animate-spin" />
+        Setting up scaling and timers…
       </span>
     );
   }
-  if (state === "failed") return <span className="text-sm text-muted">Scaling and timers unavailable for this recipe.</span>;
+  if (state === "failed") return <span className="text-sm text-muted">Scaling and timers aren&apos;t available for this one.</span>;
   return null;
 }
 
@@ -397,15 +398,15 @@ function BottomBar({
           <button onClick={onPrev} disabled={!canPrev} className="grid size-10 place-items-center rounded-full hover:bg-paper disabled:opacity-30" aria-label="Previous step">
             <ChevronLeft className="size-5" />
           </button>
-          <span className="min-w-32 text-center text-sm font-medium tabular-nums">{stepLabel}</span>
+          <span className="min-w-24 text-center text-sm font-medium tabular-nums sm:min-w-32">{stepLabel}</span>
           <button onClick={onNext} disabled={!canNext} className="grid size-10 place-items-center rounded-full hover:bg-paper disabled:opacity-30" aria-label="Next step">
             <ChevronRight className="size-5" />
           </button>
         </div>
         {!chatOpen && (
-          <button onClick={onAsk} className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-5 font-medium text-paper shadow-lg transition hover:brightness-105">
-            <Sparkles className="size-4" />
-            Ask
+          <button onClick={onAsk} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-accent px-5 font-medium whitespace-nowrap text-paper shadow-lg transition hover:brightness-105">
+            <SlidersHorizontal className="size-4" />
+            Tweak it
           </button>
         )}
         </div>

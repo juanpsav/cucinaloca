@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Code, InfoPage, StepItem, Steps } from "@/components/InfoPage";
 
 export const metadata: Metadata = {
-  title: "Chrome extension — Cucina Loca",
+  title: "Chrome extension | Cucina Loca",
   description: "Cook the recipe you're looking at in Chrome's side panel.",
 };
 
@@ -11,20 +11,18 @@ export default function ExtensionPage() {
     <InfoPage
       eyebrow="Chrome on your computer"
       title="Cook right next to the recipe"
-      intro="The Cucina Loca extension opens the cook view and assistant in Chrome's side panel, next to the recipe you're reading. It works on sites that don't let other services read their pages, because it reads the page from your own browser."
+      intro="Click the Cucina Loca icon on a recipe and it opens in Chrome's side panel, right next to the page. It works on sites that block other apps too, since it reads the page in your own browser."
     >
       <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold">How it works</h2>
-        <ul className="list-disc space-y-2 pl-5 text-muted">
-          <li>Click the Cucina Loca icon on any recipe. The side panel opens with the recipe ready to cook.</li>
-          <li>It can only read a page when you click the icon on it (Chrome&apos;s “activeTab” permission). It never runs on sites in the background.</li>
-          <li>Like the website, nothing is saved: close the panel and the session is gone.</li>
-        </ul>
+        <h2 className="font-serif text-2xl font-semibold">Privacy</h2>
+        <p className="text-muted">
+          It only reads a page when you click the icon on it, and never runs in the background. Nothing is saved. Close the panel and it&apos;s gone.
+        </p>
       </section>
 
       <section className="space-y-5">
         <h2 className="font-serif text-2xl font-semibold">Install</h2>
-        <p className="text-muted">The Chrome Web Store listing is on its way. Until then, you can load it from the source code:</p>
+        <p className="text-muted">It&apos;s not in the Chrome Web Store yet. For now, you can load it from the source code.</p>
         <Steps>
           <StepItem title="Download the source">
             <p>

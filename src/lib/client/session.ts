@@ -27,7 +27,14 @@ export type CookSession = {
   checked: string[];
   current: string | null;
   chat: ChatMessage[];
+  /** Changes from conversations the cook has since cleared (still in the recipe, still worth noting). */
+  earlierChanges: string[];
 };
+
+/** Every change still in effect, e.g. for the notes of an export. */
+export function appliedChanges(s: CookSession): string[] {
+  return [...s.earlierChanges, ...s.chat.flatMap((m) => m.changes).filter((c) => !c.undone).map((c) => c.summary)];
+}
 
 const key = (id: string) => `cucinaloca:${id}`;
 
@@ -36,7 +43,7 @@ export function loadSession(id: string): CookSession | null {
     const raw = sessionStorage.getItem(key(id));
     if (!raw) return null;
     const s = JSON.parse(raw) as CookSession;
-    return { ...s, base: s.base ?? null, chat: s.chat ?? [] };
+    return { ...s, base: s.base ?? null, chat: s.chat ?? [], earlierChanges: s.earlierChanges ?? [] };
   } catch {
     return null;
   }

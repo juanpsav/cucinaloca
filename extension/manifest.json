@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Cucina Loca",
   "version": "0.1.0",
-  "description": "Cook the recipe you're looking at: a clean cook view with scaling, timers, and an assistant that adapts it to your kitchen.",
+  "description": "Open the recipe you're on in a clean side panel, then tweak it to fit your kitchen.",
   "homepage_url": "https://cucinaloca.com",
   "icons": {
     "16": "icons/icon-16.png",

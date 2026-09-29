@@ -2,7 +2,7 @@
 
 import { BookmarkPlus, Check, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import type { CookSession } from "@/lib/client/session";
+import { appliedChanges, type CookSession } from "@/lib/client/session";
 import { melaFilename } from "@/lib/export/mela";
 
 /**
@@ -15,7 +15,7 @@ export function SaveToMela({ session }: { session: CookSession }) {
   async function save() {
     setState("busy");
     try {
-      const changes = session.chat.flatMap((m) => m.changes).filter((c) => !c.undone).map((c) => c.summary);
+      const changes = appliedChanges(session);
       const res = await fetch("/api/export/mela", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -64,7 +64,7 @@ export function SaveToMela({ session }: { session: CookSession }) {
       ) : (
         <BookmarkPlus className="size-4" />
       )}
-      <span className="hidden sm:inline">{state === "error" ? "Couldn't save, try again" : state === "done" ? "Sent to Mela" : "Save to Mela"}</span>
+      <span className="hidden sm:inline">{state === "error" ? "Couldn't save, try again" : state === "done" ? "Saved" : "Save to Mela"}</span>
     </button>
   );
 }

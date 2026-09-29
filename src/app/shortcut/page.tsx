@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Code, InfoPage, StepItem, Steps } from "@/components/InfoPage";
 
 export const metadata: Metadata = {
-  title: "iPhone shortcut — Cucina Loca",
+  title: "iPhone shortcut | Cucina Loca",
   description: "Open any recipe in Cucina Loca from the share sheet on your iPhone.",
 };
 
@@ -11,10 +11,10 @@ export default function ShortcutPage() {
     <InfoPage
       eyebrow="iPhone & iPad"
       title="Cook from the share sheet"
-      intro="Add a “Cook this” shortcut once, and any recipe you're reading in Chrome or Safari opens in Cucina Loca with two taps: Share, then Cook this."
+      intro="Add a “Cook this” shortcut and you can open any recipe in Cucina Loca from the Share button."
     >
       <section className="space-y-5">
-        <h2 className="font-serif text-2xl font-semibold">Set it up (about a minute)</h2>
+        <h2 className="font-serif text-2xl font-semibold">Set it up</h2>
         <Steps>
           <StepItem title="Open the Shortcuts app and tap +">Name the new shortcut “Cook this”.</StepItem>
           <StepItem title="Make it appear when you share">
@@ -37,16 +37,15 @@ export default function ShortcutPage() {
       <section className="space-y-3">
         <h2 className="font-serif text-2xl font-semibold">Use it</h2>
         <p className="text-muted">
-          On a recipe, tap Share (in Chrome it&apos;s in the address bar menu), then <strong className="text-ink">Cook this</strong>. The recipe opens in your
-          default browser. To use Chrome, set it in Settings → Chrome → Default Browser App.
+          On a recipe, tap Share, then <strong className="text-ink">Cook this</strong>. It opens in your default browser, which you can change in Settings →
+          Chrome → Default Browser App.
         </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold">No shortcut? No problem</h2>
+        <h2 className="font-serif text-2xl font-semibold">Without the shortcut</h2>
         <p className="text-muted">
-          Put <Code>cucinaloca.com/</Code> in front of any recipe&apos;s address. If a site doesn&apos;t let Cucina Loca read it, take screenshots of the
-          recipe and add them instead.
+          Put <Code>cucinaloca.com/</Code> in front of any recipe&apos;s address. If a site won&apos;t open, add screenshots of the recipe instead.
         </p>
       </section>
     </InfoPage>

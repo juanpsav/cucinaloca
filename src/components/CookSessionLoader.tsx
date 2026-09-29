@@ -18,7 +18,7 @@ type State =
 
 const started = (source: ImportedRecipe): State => ({
   status: "ready",
-  session: { source, recipe: fromImported(source), base: null, factor: 1, checked: [], current: null, chat: [] },
+  session: { source, recipe: fromImported(source), base: null, factor: 1, checked: [], current: null, chat: [], earlierChanges: [] },
   enrich: "running",
 });
 
@@ -101,7 +101,7 @@ export function CookSessionLoader({ url, local, page }: { url: string | null; lo
               <p className="font-medium">{state.error}</p>
               {(state.kind === "blocked" || state.kind === "not-a-recipe" || state.kind === "failed") && (
                 <p className="mt-1 text-muted">
-                  You can still cook it here: take screenshots of the recipe{host ? ` on ${host}` : ""}, or copy its text, and add them below.
+                  You can still cook it here. Take screenshots of the recipe{host ? ` on ${host}` : ""} or copy its text, and add them below.
                 </p>
               )}
             </div>
