@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowUp, Bookmark, Check, LoaderCircle, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowUp, Bookmark, Check, ChefHat, LoaderCircle, RotateCcw, SquarePen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChat, type SessionUpdater } from "@/hooks/useChat";
 import { removePreference, usePreferences } from "@/lib/client/preferences";
-import type { CookSession } from "@/lib/client/session";
+import { appliedChanges, type CookSession } from "@/lib/client/session";
 
 const SUGGESTIONS: { label: string; text: string; send: boolean }[] = [
   { label: "I don't have…", text: "I don't have ", send: false },
@@ -44,6 +44,12 @@ export function ChatPanel({
     if (open && window.matchMedia("(min-width: 1024px)").matches) inputRef.current?.focus();
   }, [open]);
 
+  /** Clear the conversation; changes it made stay in the recipe (and in the Mela notes). */
+  function newChat() {
+    update((s) => ({ ...s, chat: [], earlierChanges: appliedChanges(s) }));
+    setInput("");
+  }
+
   function submit(text = input) {
     const t = text.trim();
     if (!t || busy || disabled) return;
@@ -63,12 +69,25 @@ export function ChatPanel({
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
           <div className="flex items-center gap-2 font-medium">
-            <Sparkles className="size-4 text-accent" />
-            Change or ask anything
+            <ChefHat className="size-5 text-accent" />
+            Ask the chef
           </div>
-          <button onClick={onClose} className="grid size-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink" aria-label="Close">
-            <X className="size-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {session.chat.length > 0 && (
+              <button
+                onClick={newChat}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted hover:bg-surface hover:text-ink disabled:opacity-40"
+                title="Start a new conversation (your recipe changes stay)"
+              >
+                <SquarePen className="size-4" />
+                New chat
+              </button>
+            )}
+            <button onClick={onClose} className="grid size-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink" aria-label="Close">
+              <X className="size-5" />
+            </button>
+          </div>
         </div>
 
         {preferences.length > 0 && (

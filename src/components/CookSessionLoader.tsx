@@ -18,7 +18,7 @@ type State =
 
 const started = (source: ImportedRecipe): State => ({
   status: "ready",
-  session: { source, recipe: fromImported(source), base: null, factor: 1, checked: [], current: null, chat: [] },
+  session: { source, recipe: fromImported(source), base: null, factor: 1, checked: [], current: null, chat: [], earlierChanges: [] },
   enrich: "running",
 });
 

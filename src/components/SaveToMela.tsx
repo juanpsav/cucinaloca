@@ -2,7 +2,7 @@
 
 import { BookmarkPlus, Check, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import type { CookSession } from "@/lib/client/session";
+import { appliedChanges, type CookSession } from "@/lib/client/session";
 import { melaFilename } from "@/lib/export/mela";
 
 /**
@@ -15,7 +15,7 @@ export function SaveToMela({ session }: { session: CookSession }) {
   async function save() {
     setState("busy");
     try {
-      const changes = session.chat.flatMap((m) => m.changes).filter((c) => !c.undone).map((c) => c.summary);
+      const changes = appliedChanges(session);
       const res = await fetch("/api/export/mela", {
         method: "POST",
         headers: { "content-type": "application/json" },
