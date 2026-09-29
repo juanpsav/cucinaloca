@@ -64,6 +64,11 @@ describe("scaling", () => {
     expect(text).toBe("3 cups (400 g) flour, 1 (14-oz) can");
   });
 
+  it("keeps the author's numbers at the original size", () => {
+    const text = renderTemplate("([[113]] g) and [[1.5]] cups", 1).map((s) => s.text).join("");
+    expect(text).toBe("(113 g) and 1½ cups");
+  });
+
   it.each([
     [0.5, "½"], [0.33, "⅓"], [1.25, "1¼"], [2.95, "3"], [0.03, "⅛"], [12.4, "12"], [263, "265"], [7, "7"],
   ])("formats %s as %s", (n, s) => expect(formatAmount(n)).toBe(s));

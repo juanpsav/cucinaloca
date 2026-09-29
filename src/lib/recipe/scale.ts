@@ -6,7 +6,9 @@ export function renderTemplate(template: string, factor: number): Segment[] {
   let last = 0;
   for (const m of template.matchAll(/\[\[([\d.]+)\]\]/g)) {
     if (m.index > last) out.push({ text: template.slice(last, m.index) });
-    out.push({ text: formatAmount(Number(m[1]) * factor), amount: true });
+    // At the original size show the author's numbers; only round what we computed.
+    const n = Number(m[1]) * factor;
+    out.push({ text: factor === 1 && n >= 10 ? String(Math.round(n * 100) / 100) : formatAmount(n), amount: true });
     last = m.index + m[0].length;
   }
   if (last < template.length) out.push({ text: template.slice(last) });
