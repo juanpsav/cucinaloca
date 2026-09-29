@@ -3,7 +3,7 @@ import { ClaudeError } from "@/lib/claude";
 import { FetchPageError, fetchPage, parseRecipeUrl } from "@/lib/fetch-page";
 import { checkLimit } from "@/lib/ratelimit";
 import { extractFromHtml, extractFromImages, extractFromText } from "@/lib/recipe/ai";
-import { extractJsonLd } from "@/lib/recipe/jsonld";
+import { extractFromScripts, extractJsonLd } from "@/lib/recipe/jsonld";
 
 export const maxDuration = 60;
 
@@ -16,6 +16,16 @@ const Body = z.union([
       .array(z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), data: z.string().max(3_000_000) }))
       .min(1)
       .max(6),
+  }),
+  // Read by the browser extension from the page the cook has open.
+  z.object({
+    url: z.string().max(2048),
+    page: z.object({
+      title: z.string().max(500),
+      siteName: z.string().max(200).nullable(),
+      jsonLd: z.array(z.string().max(500_000)).max(20),
+      text: z.string().max(60_000),
+    }),
   }),
   z.object({ url: OptionalUrl, text: z.string().min(50).max(60_000) }),
   z.object({ url: z.string().max(2048) }),
@@ -35,6 +45,14 @@ export async function POST(request: Request) {
       const url = parsed.data.url ? parseRecipeUrl(parsed.data.url).toString() : null;
       const recipe = await extractFromImages(parsed.data.images, url);
       return recipe ? Response.json(recipe) : fail("Couldn't find a recipe in those images.", "not-a-recipe", 422);
+    }
+    if ("page" in parsed.data) {
+      const url = parseRecipeUrl(parsed.data.url).toString();
+      const { page } = parsed.data;
+      const recipe =
+        extractFromScripts(page.jsonLd, url, page.siteName) ??
+        (page.text.length >= 200 ? await extractFromText(`${page.title}\n\n${page.text}`, url) : null);
+      return recipe ? Response.json(recipe) : fail("This page doesn't seem to have a recipe on it.", "not-a-recipe", 422);
     }
     if ("text" in parsed.data) {
       const url = parsed.data.url ? parseRecipeUrl(parsed.data.url).toString() : null;

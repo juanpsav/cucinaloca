@@ -7,3 +7,9 @@ export const CookClient = dynamic(() => import("./CookSessionLoader").then((m) =
   ssr: false,
   loading: () => null,
 });
+
+/** Inside the Chrome extension's side panel. */
+export const EmbedClient = dynamic(() => import("./EmbedHost").then((m) => m.EmbedHost), {
+  ssr: false,
+  loading: () => null,
+});

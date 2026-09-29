@@ -43,3 +43,6 @@ next-env.d.ts
 
 # real publisher pages used for local parser tests (not redistributed)
 /test/fixtures/real/
+
+# Chrome Web Store upload bundle (npm run ext:zip)
+/cucinaloca-extension.zip

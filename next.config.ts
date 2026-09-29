@@ -4,6 +4,21 @@ const nextConfig: NextConfig = {
   // cucinaloca.com/<recipe-url> must reach src/proxy.ts untouched: a recipe URL's
   // trailing slash and "//" are significant. The proxy does the usual cleanup for our own pages.
   skipTrailingSlashRedirect: true,
+
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        // Only we and the Chrome extension's side panel may frame the app.
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors 'self' chrome-extension:${process.env.NODE_ENV === "development" ? " http://localhost:*" : ""}`,
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

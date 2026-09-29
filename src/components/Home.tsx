@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -70,7 +71,13 @@ export function Home() {
           <span className="font-medium text-ink">Tip:</span> put <code className="rounded bg-surface px-1.5 py-0.5 text-ink">cucinaloca.com/</code> in front of
           any recipe&apos;s address.
         </p>
-        <p className="mt-2">
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          <Link className="underline decoration-line underline-offset-4 hover:text-ink" href="/shortcut">
+            iPhone shortcut
+          </Link>
+          <Link className="underline decoration-line underline-offset-4 hover:text-ink" href="/extension">
+            Chrome extension
+          </Link>
           <a className="underline decoration-line underline-offset-4 hover:text-ink" href="https://github.com/juanpsav/cucinaloca">
             Source on GitHub
           </a>

@@ -6,12 +6,20 @@ type Node = Record<string, unknown>;
 /** Extract a schema.org Recipe from a page's JSON-LD, or null if there isn't one. */
 export function extractJsonLd(html: string, url: string | null): ImportedRecipe | null {
   const $ = cheerio.load(html);
+  const scripts = $('script[type="application/ld+json"]')
+    .toArray()
+    .map((el) => $(el).text());
+  return extractFromScripts(scripts, url, $('meta[property="og:site_name"]').attr("content") ?? null);
+}
+
+/** The same, from the text of JSON-LD script tags (e.g. read by the browser extension). */
+export function extractFromScripts(scripts: string[], url: string | null, siteName: string | null): ImportedRecipe | null {
   let node: Node | null = null;
-  $('script[type="application/ld+json"]').each((_, el) => {
-    if (node) return;
-    const json = parseLoose($(el).text());
-    if (json !== undefined) node = findRecipe(json);
-  });
+  for (const text of scripts) {
+    const json = parseLoose(text);
+    node = json === undefined ? null : findRecipe(json);
+    if (node) break;
+  }
   if (!node) return null;
   const r: Node = node;
 
@@ -35,7 +43,7 @@ export function extractJsonLd(html: string, url: string | null): ImportedRecipe 
   };
   const meta: RecipeMeta = {
     url,
-    siteName: $('meta[property="og:site_name"]').attr("content") ?? name(r.publisher) ?? hostname(url),
+    siteName: siteName ?? name(r.publisher) ?? hostname(url),
     author: name(r.author),
     image: image(r.image),
   };

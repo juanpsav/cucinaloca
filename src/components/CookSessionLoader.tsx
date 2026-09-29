@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { CookView, type EnrichState } from "@/components/CookView";
 import { Logo } from "@/components/Logo";
 import { ShareFallback } from "@/components/ShareFallback";
+import type { PagePayload } from "@/lib/embed";
 import { loadSession, saveSession, takeStashedImport, type CookSession } from "@/lib/client/session";
 import { applyEnrichment, fromImported } from "@/lib/recipe/build";
 import type { Enrichment, ImportedRecipe } from "@/lib/recipe/types";
@@ -22,7 +23,7 @@ const started = (source: ImportedRecipe): State => ({
 });
 
 /** Client-only (reads sessionStorage on first render); see CookClient. */
-export function CookSessionLoader({ url, local }: { url: string | null; local: string | null }) {
+export function CookSessionLoader({ url, local, page }: { url: string | null; local: string | null; page?: PagePayload }) {
   const id = url ?? local ?? "";
   const [state, setState] = useState<State>(() => {
     const saved = loadSession(id);
@@ -40,13 +41,15 @@ export function CookSessionLoader({ url, local }: { url: string | null; local: s
   useEffect(() => {
     if (state.status !== "loading" || !url || importing.current) return;
     importing.current = true;
-    fetch("/api/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) })
+    // From the extension we already have the page as the cook's browser loaded it.
+    const body = page ? { url, page: { title: page.title, siteName: page.siteName, jsonLd: page.jsonLd, text: page.text } } : { url };
+    fetch("/api/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
       .then(async (res) => {
         const data = await res.json();
         setState(res.ok ? started(data) : { status: "error", error: data.error ?? "Couldn't open that recipe.", kind: data.kind ?? "failed" });
       })
       .catch(() => setState({ status: "error", error: "Couldn't reach Cucina Loca. Check your connection.", kind: "failed" }));
-  }, [state.status, url]);
+  }, [state.status, url, page]);
 
   // Have Claude read the recipe (scaling, step ingredients, timers) while the cook starts reading.
   const source = state.status === "ready" && state.enrich === "running" ? state.session.source : null;
