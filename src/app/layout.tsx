@@ -9,7 +9,7 @@ const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["lati
 export const metadata: Metadata = {
   title: "Cucina Loca",
   description:
-    "Cook from any recipe online without the clutter, and change it to fit your kitchen.",
+    "A chef in your kitchen. Paste a recipe from any site and ask for swaps, scaling or what's in season.",
 };
 
 export const viewport: Viewport = {

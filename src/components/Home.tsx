@@ -31,10 +31,10 @@ export function Home() {
       <div className="flex flex-1 flex-col justify-center py-16">
         <Logo href={null} />
         <h1 className="mt-6 font-serif text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-6xl">
-          Just the recipe.
+          A chef in your kitchen.
         </h1>
         <p className="mt-5 max-w-lg text-lg text-muted">
-          Paste a link from any site and cook from a clean page. Change what you need to. Close the tab when you&apos;re done and it&apos;s gone.
+          Paste a recipe from any site. Out of shallots? Cooking for six? Want what&apos;s in season? Just ask, and the recipe changes to match.
         </p>
 
         <form onSubmit={open} className="mt-10 flex items-center gap-2 rounded-full border border-line bg-surface p-1.5 pl-5 shadow-sm focus-within:border-accent">

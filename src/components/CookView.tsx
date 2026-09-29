@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, SlidersHorizontal, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
@@ -187,6 +187,7 @@ export function CookView({ session, update, enrichState }: { session: CookSessio
       <BottomBar
         timers={timers}
         stepLabel={currentIndex >= 0 ? `Step ${currentIndex + 1} of ${recipe.steps.length}` : `${recipe.steps.length} steps`}
+        stepShort={currentIndex >= 0 ? `${currentIndex + 1}/${recipe.steps.length}` : `${recipe.steps.length} steps`}
         onPrev={() => goTo(currentIndex <= 0 ? 0 : currentIndex - 1)}
         onNext={() => goTo(currentIndex + 1)}
         canPrev={currentIndex > 0}
@@ -354,6 +355,7 @@ function StepCard({
 function BottomBar({
   timers,
   stepLabel,
+  stepShort,
   onPrev,
   onNext,
   canPrev,
@@ -363,6 +365,7 @@ function BottomBar({
 }: {
   timers: ReturnType<typeof useTimers>;
   stepLabel: string;
+  stepShort: string;
   onPrev: () => void;
   onNext: () => void;
   canPrev: boolean;
@@ -395,18 +398,27 @@ function BottomBar({
         )}
         <div className="flex items-center justify-center gap-2">
         <div className="flex w-fit items-center gap-1 rounded-full border border-line bg-surface/95 p-1 shadow-lg backdrop-blur">
-          <button onClick={onPrev} disabled={!canPrev} className="grid size-10 place-items-center rounded-full hover:bg-paper disabled:opacity-30" aria-label="Previous step">
+          <button onClick={onPrev} disabled={!canPrev} className="grid size-9 place-items-center rounded-full hover:bg-paper disabled:opacity-30 sm:size-10" aria-label="Previous step">
             <ChevronLeft className="size-5" />
           </button>
-          <span className="min-w-24 text-center text-sm font-medium tabular-nums sm:min-w-32">{stepLabel}</span>
-          <button onClick={onNext} disabled={!canNext} className="grid size-10 place-items-center rounded-full hover:bg-paper disabled:opacity-30" aria-label="Next step">
+          <span className="min-w-14 text-center text-sm font-medium tabular-nums sm:min-w-32">
+            <span className="sm:hidden">{stepShort}</span>
+            <span className="hidden sm:inline">{stepLabel}</span>
+          </span>
+          <button onClick={onNext} disabled={!canNext} className="grid size-9 place-items-center rounded-full hover:bg-paper disabled:opacity-30 sm:size-10" aria-label="Next step">
             <ChevronRight className="size-5" />
           </button>
         </div>
         {!chatOpen && (
-          <button onClick={onAsk} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-accent px-5 font-medium whitespace-nowrap text-paper shadow-lg transition hover:brightness-105">
-            <SlidersHorizontal className="size-4" />
-            Tweak it
+          <button
+            onClick={onAsk}
+            className="inline-flex h-12 shrink-0 items-center gap-2.5 rounded-full bg-accent pr-5 pl-4 whitespace-nowrap text-paper shadow-lg transition hover:brightness-105"
+          >
+            <Sparkles className="size-5" />
+            <span className="flex flex-col items-start leading-tight">
+              <span className="font-medium">Tweak it</span>
+              <span className="text-[11px] opacity-85">Ask Loca, your sous-chef</span>
+            </span>
           </button>
         )}
         </div>

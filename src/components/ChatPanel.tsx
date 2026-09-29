@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Bookmark, Check, LoaderCircle, RotateCcw, SquarePen, X } from "lucide-react";
+import { ArrowUp, Bookmark, Check, LoaderCircle, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChat, type SessionUpdater } from "@/hooks/useChat";
 import { removePreference, usePreferences } from "@/lib/client/preferences";
@@ -68,7 +68,13 @@ export function ChatPanel({
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <div className="font-medium">Tweak it</div>
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="size-5 text-accent" />
+            <div className="leading-tight">
+              <p className="font-medium">Tweak it</p>
+              <p className="text-xs text-muted">Ask Loca, your sous-chef</p>
+            </div>
+          </div>
           <div className="flex items-center gap-1">
             {session.chat.length > 0 && (
               <button
