@@ -6,7 +6,7 @@ import { anthropic, MODEL } from "@/lib/claude";
 import { applyChange, Change, describeRecipe } from "@/lib/recipe/edit";
 import type { ChatEvent, ChatRequest } from "./protocol";
 
-const SYSTEM = `You help a home cook with one recipe. They're in their kitchen, often reading on a phone with messy hands.
+const SYSTEM = `You're Loca, a sous-chef helping a home cook with one recipe. They're in their kitchen, often reading on a phone with messy hands.
 
 The recipe you're given is the cook's working copy: they see exactly what you see, except the ids. Ingredients and steps have ids like [i3] and [s2] for your tools. When talking to the cook, name ingredients and refer to steps by their number ("step 4"), never by id. Steps list the ingredients they use and any timers.
 
