@@ -1,0 +1,132 @@
+diff --git a/src/lib/chat/agent.ts b/src/lib/chat/agent.ts
+index c60d20b..c66e263 100644
+--- a/src/lib/chat/agent.ts
++++ b/src/lib/chat/agent.ts
+@@ -1,4 +1,4 @@
+-import type { BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
++import type { BetaMessage, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+ import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
+ import { ToolError } from "@anthropic-ai/sdk/lib/tools/ToolError";
+ import { z } from "zod";
+@@ -6,7 +6,7 @@ import { anthropic, MODEL } from "@/lib/claude";
+ import { applyChange, Change, describeRecipe } from "@/lib/recipe/edit";
+ import type { ChatEvent, ChatRequest } from "./protocol";
+ 
+-const SYSTEM = `You're Loca, a sous-chef helping a home cook with one recipe. They're in their kitchen, often reading on a phone with messy hands.
++export const SYSTEM = `You're Loca, a sous-chef helping a home cook with one recipe. They're in their kitchen, often reading on a phone with messy hands.
+ 
+ The recipe you're given is the cook's working copy: they see exactly what you see, except the ids. Ingredients and steps have ids like [i3] and [s2] for your tools. When talking to the cook, name ingredients and refer to steps by their number ("step 4"), never by id. Steps list the ingredients they use and any timers.
+ 
+@@ -52,9 +52,27 @@ const rememberPreference = z.object({
+   preference: z.string().describe('A short lasting fact, e.g. "Doesn\'t eat pork", "No stand mixer", "Cooking for 2"'),
+ });
+ 
+-export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, signal: AbortSignal) {
++/** Optional hooks for the eval runner (evals/chat): see every model message and tool result. */
++export type AgentObserver = {
++  onMessage?: (message: BetaMessage) => void;
++  onToolResult?: (name: string, input: unknown, output: string, isError: boolean) => void;
++};
++
++export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, signal: AbortSignal, observe?: AgentObserver) {
+   let recipe = req.recipe;
+   let factor = req.factor;
++  const observed =
++    <I>(name: string, run: (input: I) => Promise<string>) =>
++    async (input: I) => {
++      try {
++        const output = await run(input);
++        observe?.onToolResult?.(name, input, output, false);
++        return output;
++      } catch (e) {
++        observe?.onToolResult?.(name, input, e instanceof ToolError ? String(e.content) : String(e), true);
++        throw e;
++      }
++    };
+ 
+   const tools = [
+     {
+@@ -63,13 +81,13 @@ export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, s
+         description:
+           "Change the cook's working recipe. Ops apply in order and atomically. Returns the updated recipe, or an error (then nothing changed).",
+         inputSchema: Change,
+-        run: async (change) => {
++        run: observed("edit_recipe", async (change: Change) => {
+           const result = applyChange(recipe, change, factor);
+           if (!result.ok) throw new ToolError(result.error);
+           recipe = result.recipe;
+           emit({ type: "change", change, factor });
+           return `Applied. The recipe is now:\n${describeRecipe(recipe, factor)}`;
+-        },
++        }),
+       }),
+       strict: true,
+     },
+@@ -78,14 +96,14 @@ export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, s
+         name: "set_servings",
+         description: "Rescale the whole recipe. All marked amounts update automatically.",
+         inputSchema: setServings,
+-        run: async ({ servings, multiplier }) => {
++        run: observed("set_servings", async ({ servings, multiplier }: z.infer<typeof setServings>) => {
+           const base = recipe.servings.amount;
+           const next = servings != null && base ? servings / base : multiplier;
+           if (next == null || !(next > 0.05 && next <= 50)) throw new ToolError("Give a positive number of servings or a multiplier.");
+           factor = next;
+           emit({ type: "servings", factor });
+           return `Scaled to ×${Math.round(factor * 100) / 100}.`;
+-        },
++        }),
+       }),
+       strict: true,
+     },
+@@ -94,10 +112,10 @@ export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, s
+         name: "remember_preference",
+         description: "Save a lasting preference in the cook's browser; it will be included in future sessions.",
+         inputSchema: rememberPreference,
+-        run: async ({ preference }) => {
++        run: observed("remember_preference", async ({ preference }: z.infer<typeof rememberPreference>) => {
+           emit({ type: "preference", text: preference.slice(0, 200) });
+           return "Saved.";
+-        },
++        }),
+       }),
+       strict: true,
+     },
+@@ -122,19 +140,22 @@ export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, s
+ 
+   let wroteText = false;
+   for await (const stream of runner) {
+-    let first = true;
++    // Text written before a tool call is the model thinking out loud ("Or just remove it?
++    // They didn't say..."), so only the text of a turn that ends the reply reaches the cook.
++    let text = "";
+     for await (const event of stream) {
+       if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
+         emit({ type: "status", text: STATUS[event.content_block.name] ?? "Working…" });
+       } else if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+-        // Separate text from different turns of the loop.
+-        const sep = first && wroteText ? "\n\n" : "";
+-        first = false;
+-        wroteText = true;
+-        emit({ type: "text", text: sep + event.delta.text });
++        text += event.delta.text;
+       }
+     }
+     const message = await stream.finalMessage();
++    observe?.onMessage?.(message);
++    if (message.stop_reason !== "tool_use" && text.trim()) {
++      emit({ type: "text", text: (wroteText ? "\n\n" : "") + text.trim() });
++      wroteText = true;
++    }
+     if (message.stop_reason === "refusal") {
+       emit({ type: "error", message: "I can't help with that one." });
+       return;
+@@ -142,7 +163,7 @@ export async function runAgent(req: ChatRequest, emit: (e: ChatEvent) => void, s
+   }
+ }
+ 
+-function toMessages(req: ChatRequest): BetaMessageParam[] {
++export function toMessages(req: ChatRequest): BetaMessageParam[] {
+   const history = req.turns.slice(0, -1).map((t): BetaMessageParam => ({
+     role: t.role,
+     content: t.changes.length ? `${t.text}\n\n[Changed the recipe: ${t.changes.join("; ")}]` : t.text || "(no reply)",

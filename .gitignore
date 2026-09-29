@@ -46,3 +46,10 @@ next-env.d.ts
 
 # Chrome Web Store upload bundle (npm run ext:zip)
 /cucinaloca-extension.zip
+
+# Eval output: keep results, leave out bulky and derived files
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/state.json
+.claude/hillclimb/**/trajectory/
+.claude/hillclimb/chat/ci/

@@ -16,6 +16,27 @@
 - **Change it:** tell the assistant what you have, what you don't, who you're cooking for. A Claude agent (tool use, streamed) edits the recipe through typed operations: `edit_recipe` (atomic batches of ingredient/step updates; the same pure function validates on the server and applies in the browser), `set_servings` and `remember_preference`. Changes show inline against the original, and each reply can be undone as a unit.
 - **Keep it:** "Save to Mela" exports your version (current scale, edits, groups, a note of what changed, the photo) as a [`.melarecipe`](https://mela.recipes/fileformat/) file: the share sheet on phones, a download on computers.
 
+## Evals
+
+`evals/chat/` tests the sous-chef on 36 requests across 6 recipes written for the eval (swaps, missing ingredients, diets and allergies with hidden sources, scaling, equipment, questions that must not touch the recipe, seasonality by hemisphere, French, and follow-ups). The runner calls the real agent and applies its edits exactly as the browser does, then scores four things:
+
+- **Correct edits** (code): the final recipe really lost the pancetta, kept the right scale, left questions alone, saved or didn't save a preference.
+- **Style rules** (code): no markdown, no "I've swapped…", no sign-offs, no internal ids, no leaked working notes, length limits.
+- **Chef approves** and **sounds human** (Claude Sonnet 5.5 as judge, one property per call).
+
+The graders are checked against empty, evasive and wrong answers (`npm run eval:chat -- --selftest`). The first baseline caught the model's working notes leaking into replies ("Or just remove it? They didn't say what they have…") in 13 of 72 runs. Fixing the streaming took that to 0 and style from 71% to 86%.
+
+| 36 cases × 2 runs | Correct | Chef approves | Style | Sounds human |
+|---|---|---|---|---|
+| Baseline | 100% | 79% | 71% | 60% |
+| Hide pre-tool text | 100% | 79% | 86% | 62% |
+
+```bash
+npm run eval:chat -- --reps 2          # about $1.60 and 3 minutes
+```
+
+On GitHub it runs on demand (Actions → Eval sous-chef chat), with `ANTHROPIC_API_KEY` set as a repository secret.
+
 ## Stack
 
 Next.js 16 · React 19 · Tailwind 4 · Claude API (`claude-opus-5-5`: structured outputs, vision, streaming tool runner with strict Zod tools, prompt caching, server-side refusal fallback) · Zod · Upstash rate limiting · Vitest
@@ -37,5 +58,5 @@ To try the extension, load `extension/` unpacked at `chrome://extensions` (Devel
 - [x] M2: chat agent that edits the recipe (swaps, scaling, equipment) with typed patches and diffs
 - [x] M3: iOS Shortcut and Chrome side-panel extension (Web Store listing pending)
 - [x] M4: Save to Mela
-- [ ] M5: evals
+- [x] M5: evals
 - [ ] M6: hands-free voice
