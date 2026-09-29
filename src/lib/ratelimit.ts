@@ -5,6 +5,7 @@ import { Redis } from "@upstash/redis";
 const LIMITS = {
   import: { requests: 20, windowSeconds: 3600 },
   enrich: { requests: 20, windowSeconds: 3600 },
+  chat: { requests: 60, windowSeconds: 3600 },
 } as const;
 export type LimitName = keyof typeof LIMITS;
 

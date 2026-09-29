@@ -77,6 +77,7 @@ For every ingredient line and step, return a template: the text copied exactly, 
 - Scale: ingredient quantities, including metric/imperial equivalents in parentheses and amounts restated inside steps ("add 1 tbsp oil" -> "add [[1]] tbsp oil").
 - Don't scale: package sizes ("1 (14-oz) can" -> "[[1]] (14-oz) can"), temperatures, times, pan or dish sizes, step numbers, "Serves 4".
 - Write fractions and mixed numbers as decimals: "1½" or "1 1/2" -> [[1.5]], "⅓" -> [[0.333]]. For ranges like "2-3 cloves" mark both: "[[2]]-[[3]] cloves".
+- Amounts of whole items that can't be split in practice (eggs, egg yolks, garlic cloves, cans, lemons) get |w so they round to whole numbers: "2 large eggs" -> "[[2|w]] large eggs".
 - Change nothing else: same words, punctuation, spelling and language.
 
 name: the everyday name of the ingredient, short, in the recipe's language ("flour", "yellow onion").

@@ -17,7 +17,7 @@ type State =
 
 const started = (source: ImportedRecipe): State => ({
   status: "ready",
-  session: { source, recipe: fromImported(source), factor: 1, checked: [], current: null },
+  session: { source, recipe: fromImported(source), base: null, factor: 1, checked: [], current: null, chat: [] },
   enrich: "running",
 });
 
@@ -63,7 +63,10 @@ export function CookSessionLoader({ url, local }: { url: string | null; local: s
           if (s.status !== "ready" || s.session.source !== source) return s;
           // Keep what the cook did meanwhile (checked items, current step, scale).
           const recipe = enrichment && applyEnrichment(s.session.recipe, enrichment);
-          return recipe ? { ...s, session: { ...s.session, recipe }, enrich: "done" } : { ...s, enrich: "failed" };
+          // What the recipe looked like before any chat edits: the reference for diffs and "back to the original".
+          return recipe
+            ? { ...s, session: { ...s.session, recipe, base: recipe }, enrich: "done" }
+            : { ...s, session: { ...s.session, base: s.session.recipe }, enrich: "failed" };
         }),
       );
   }, [source]);
@@ -76,7 +79,7 @@ export function CookSessionLoader({ url, local }: { url: string | null; local: s
     return (
       <CookView
         session={state.session}
-        onChange={(session) => setState((s) => (s.status === "ready" ? { ...s, session } : s))}
+        update={(fn) => setState((s) => (s.status === "ready" ? { ...s, session: fn(s.session) } : s))}
         enrichState={state.enrich}
       />
     );

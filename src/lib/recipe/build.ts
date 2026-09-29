@@ -1,3 +1,4 @@
+import { MARKER } from "./scale";
 import type { Enrichment, ImportedRecipe, Recipe } from "./types";
 
 /** A renderable recipe straight from the source, before Claude has read it. */
@@ -61,8 +62,8 @@ export function applyEnrichment(recipe: Recipe, e: Enrichment): Recipe | null {
 
 /** Same words as the source once numbers are set aside; amounts may be re-spelled (1 1/2 -> [[1.5]]). */
 function faithful(text: string, template: string): string | null {
-  if (!/\[\[[\d.]+\]\]/.test(template)) return null;
-  const words = (s: string) => s.replace(/\[\[[\d.]+\]\]/g, " ").replace(/[\d\s.,/⁄½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞-]+/g, "").toLowerCase();
+  if (!new RegExp(MARKER.source).test(template)) return null;
+  const words = (s: string) => s.replace(MARKER, " ").replace(/[\d\s.,/⁄½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞-]+/g, "").toLowerCase();
   return words(text) === words(template) ? template : null;
 }
 

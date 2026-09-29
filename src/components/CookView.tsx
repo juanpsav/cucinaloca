@@ -1,44 +1,54 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
-import { Fragment, useEffect, useMemo, useRef } from "react";
+import type { SessionUpdater } from "@/hooks/useChat";
 import { formatClock, useTimers } from "@/hooks/useTimers";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type { CookSession } from "@/lib/client/session";
+import { diffList, type DiffStatus } from "@/lib/recipe/diff";
 import { formatAmount, renderTemplate } from "@/lib/recipe/scale";
 import type { Ingredient, Recipe, Step } from "@/lib/recipe/types";
 
 export type EnrichState = "running" | "done" | "failed";
 
-export function CookView({
-  session,
-  onChange,
-  enrichState,
-}: {
-  session: CookSession;
-  onChange: (s: CookSession) => void;
-  enrichState: EnrichState;
-}) {
-  const { recipe, factor, checked, current } = session;
+export function CookView({ session, update, enrichState }: { session: CookSession; update: SessionUpdater; enrichState: EnrichState }) {
+  const { recipe, base, factor, checked, current } = session;
   const wake = useWakeLock();
   const timers = useTimers();
+  const [chatOpen, setChatOpen] = useState(false);
   const byId = useMemo(() => new Map(recipe.ingredients.map((i) => [i.id, i])), [recipe.ingredients]);
   const stepRefs = useRef(new Map<string, HTMLElement>());
   const currentIndex = recipe.steps.findIndex((s) => s.id === current);
+  const ingredients = useMemo(() => diffList(recipe.ingredients, base?.ingredients ?? null), [recipe.ingredients, base]);
+  const steps = useMemo(() => diffList(recipe.steps, base?.steps ?? null), [recipe.steps, base]);
+  const edited = session.chat.some((m) => m.changes.some((c) => !c.undone));
 
-  const set = (patch: Partial<CookSession>) => onChange({ ...session, ...patch });
+  const set = (patch: Partial<CookSession>) => update((s) => ({ ...s, ...patch }));
   const goTo = (index: number) => {
     const step = recipe.steps[Math.max(0, Math.min(recipe.steps.length - 1, index))];
     set({ current: step.id });
   };
+  const resetChanges = () =>
+    update((s) =>
+      s.base
+        ? {
+            ...s,
+            recipe: s.base,
+            chat: s.chat.map((m) => ({ ...m, changes: m.changes.map((c) => ({ ...c, undone: true })) })),
+          }
+        : s,
+    );
 
   useEffect(() => {
     if (current) stepRefs.current.get(current)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [current]);
 
+  let stepNumber = 0;
   return (
-    <div className="pb-40">
+    <div className={`pb-40 transition-[padding] duration-300 ${chatOpen ? "lg:pr-[400px]" : ""}`}>
       <header className="sticky top-0 z-20 border-b border-line/70 bg-paper/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Logo className="text-xl" />
@@ -68,28 +78,56 @@ export function CookView({
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Servings recipe={recipe} factor={factor} onFactor={(f) => set({ factor: f })} />
           <EnrichBadge state={enrichState} />
+          {edited && (
+            <button onClick={resetChanges} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted hover:bg-surface hover:text-ink">
+              <Undo2 className="size-4" />
+              Back to the original
+            </button>
+          )}
         </div>
 
         <div className="mt-8 grid gap-10 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:gap-12">
           <section aria-labelledby="ingredients" className="md:sticky md:top-20 md:self-start md:max-h-[calc(100dvh-6rem)] md:overflow-y-auto md:pr-2">
             <SectionTitle id="ingredients">Ingredients</SectionTitle>
             <ul className="mt-3">
-              {recipe.ingredients.map((ing, i) => {
+              {ingredients.map(({ item: ing, status, before }, i) => {
+                const prevGroup = ingredients[i - 1]?.item.group;
+                const heading = ing.group && ing.group !== prevGroup ? <GroupLabel>{ing.group}</GroupLabel> : null;
+                if (status === "removed") {
+                  return (
+                    <Fragment key={`removed-${ing.id}`}>
+                      {heading}
+                      <li className="flex items-start gap-3 px-2 py-2 text-sm text-muted">
+                        <span className="mt-0.5 size-5 shrink-0" />
+                        <span className="line-through decoration-muted/60">
+                          <Amounts text={ing.text} template={ing.template} factor={factor} plain />
+                        </span>
+                      </li>
+                    </Fragment>
+                  );
+                }
                 const done = checked.includes(ing.id);
                 const inStep = currentIndex >= 0 && recipe.steps[currentIndex].ingredientIds.includes(ing.id);
                 return (
                   <Fragment key={ing.id}>
-                    {ing.group && ing.group !== recipe.ingredients[i - 1]?.group && <GroupLabel>{ing.group}</GroupLabel>}
+                    {heading}
                     <li>
                       <button
                         onClick={() => set({ checked: done ? checked.filter((c) => c !== ing.id) : [...checked, ing.id] })}
-                        className={`flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition ${inStep ? "bg-focus" : "hover:bg-surface"}`}
+                        className={`flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition ${inStep ? "bg-focus" : "hover:bg-surface"} ${changedBar(status)}`}
                       >
                         <span className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border transition ${done ? "border-accent bg-accent text-paper" : "border-line"}`}>
                           {done && <Check className="size-3" strokeWidth={3} />}
                         </span>
-                        <span className={`leading-snug ${done ? "text-muted line-through decoration-muted/60" : ""}`}>
-                          <Amounts text={ing.text} template={ing.template} factor={factor} />
+                        <span className="leading-snug">
+                          <span className={done ? "text-muted line-through decoration-muted/60" : ""}>
+                            <Amounts text={ing.text} template={ing.template} factor={factor} />
+                          </span>
+                          {before && (
+                            <span className="mt-0.5 block text-sm text-muted line-through decoration-muted/60">
+                              <Amounts text={before.text} template={before.template} factor={factor} plain />
+                            </span>
+                          )}
                         </span>
                       </button>
                     </li>
@@ -102,24 +140,42 @@ export function CookView({
           <section aria-labelledby="steps">
             <SectionTitle id="steps">Steps</SectionTitle>
             <ol className="mt-3 space-y-3">
-              {recipe.steps.map((step, i) => (
-                <Fragment key={step.id}>
-                  {step.group && step.group !== recipe.steps[i - 1]?.group && <GroupLabel>{step.group}</GroupLabel>}
-                  <StepCard
-                    ref={(el) => {
-                      if (el) stepRefs.current.set(step.id, el);
-                    }}
-                    step={step}
-                    index={i}
-                    isCurrent={step.id === current}
-                    dimmed={current !== null && step.id !== current}
-                    ingredients={step.ingredientIds.map((id) => byId.get(id)!).filter(Boolean)}
-                    factor={factor}
-                    onSelect={() => set({ current: step.id === current ? null : step.id })}
-                    onTimer={(label, seconds) => timers.start(label, seconds)}
-                  />
-                </Fragment>
-              ))}
+              {steps.map(({ item: step, status, before }, i) => {
+                const prevGroup = steps[i - 1]?.item.group;
+                const heading = step.group && step.group !== prevGroup ? <GroupLabel>{step.group}</GroupLabel> : null;
+                if (status === "removed") {
+                  return (
+                    <Fragment key={`removed-${step.id}`}>
+                      {heading}
+                      <li className="flex gap-4 px-4 py-2 text-sm text-muted">
+                        <span className="size-8 shrink-0" />
+                        <span className="line-through decoration-muted/60">{step.text}</span>
+                      </li>
+                    </Fragment>
+                  );
+                }
+                const number = stepNumber++;
+                return (
+                  <Fragment key={step.id}>
+                    {heading}
+                    <StepCard
+                      ref={(el) => {
+                        if (el) stepRefs.current.set(step.id, el);
+                      }}
+                      step={step}
+                      index={number}
+                      status={status}
+                      before={before}
+                      isCurrent={step.id === current}
+                      dimmed={current !== null && step.id !== current}
+                      ingredients={step.ingredientIds.map((id) => byId.get(id)!).filter(Boolean)}
+                      factor={factor}
+                      onSelect={() => set({ current: step.id === current ? null : step.id })}
+                      onTimer={(label, seconds) => timers.start(label, seconds)}
+                    />
+                  </Fragment>
+                );
+              })}
             </ol>
           </section>
         </div>
@@ -132,9 +188,16 @@ export function CookView({
         onNext={() => goTo(currentIndex + 1)}
         canPrev={currentIndex > 0}
         canNext={currentIndex < recipe.steps.length - 1}
+        onAsk={() => setChatOpen(true)}
+        chatOpen={chatOpen}
       />
+      <ChatPanel session={session} update={update} open={chatOpen} onClose={() => setChatOpen(false)} disabled={enrichState === "running"} />
     </div>
   );
+}
+
+function changedBar(status: DiffStatus) {
+  return status === "changed" || status === "added" ? "shadow-[inset_3px_0_0_var(--accent)]" : "";
 }
 
 function TitleBlock({ recipe }: { recipe: Recipe }) {
@@ -212,6 +275,8 @@ function StepCard({
   ref,
   step,
   index,
+  status,
+  before,
   isCurrent,
   dimmed,
   ingredients,
@@ -222,6 +287,8 @@ function StepCard({
   ref: (el: HTMLLIElement | null) => void;
   step: Step;
   index: number;
+  status: DiffStatus;
+  before?: Step;
   isCurrent: boolean;
   dimmed: boolean;
   ingredients: Ingredient[];
@@ -232,7 +299,7 @@ function StepCard({
   return (
     <li
       ref={ref}
-      className={`scroll-mt-24 rounded-2xl border transition ${isCurrent ? "border-accent/40 bg-surface shadow-sm" : "border-transparent"} ${dimmed ? "opacity-55" : ""}`}
+      className={`scroll-mt-24 rounded-2xl border transition ${isCurrent ? "border-accent/40 bg-surface shadow-sm" : "border-transparent"} ${dimmed ? "opacity-55" : ""} ${changedBar(status)}`}
     >
       <button onClick={onSelect} className="flex w-full gap-4 p-4 text-left">
         <span
@@ -242,6 +309,11 @@ function StepCard({
         </span>
         <span className={`leading-relaxed ${isCurrent ? "text-lg" : ""}`}>
           <Amounts text={step.text} template={step.template} factor={factor} />
+          {before && (
+            <span className="mt-1 block text-sm text-muted line-through decoration-muted/60">
+              <Amounts text={before.text} template={before.template} factor={factor} plain />
+            </span>
+          )}
         </span>
       </button>
 
@@ -283,6 +355,8 @@ function BottomBar({
   onNext,
   canPrev,
   canNext,
+  onAsk,
+  chatOpen,
 }: {
   timers: ReturnType<typeof useTimers>;
   stepLabel: string;
@@ -290,9 +364,11 @@ function BottomBar({
   onNext: () => void;
   canPrev: boolean;
   canNext: boolean;
+  onAsk: () => void;
+  chatOpen: boolean;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
+    <div className={`fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)] transition-[right] duration-300 ${chatOpen ? "lg:right-[400px]" : ""}`}>
       <div className="mx-auto max-w-6xl space-y-2 px-4 pb-3">
         {timers.timers.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2">
@@ -314,7 +390,8 @@ function BottomBar({
             })}
           </div>
         )}
-        <div className="mx-auto flex w-fit items-center gap-1 rounded-full border border-line bg-surface/95 p-1 shadow-lg backdrop-blur">
+        <div className="flex items-center justify-center gap-2">
+        <div className="flex w-fit items-center gap-1 rounded-full border border-line bg-surface/95 p-1 shadow-lg backdrop-blur">
           <button onClick={onPrev} disabled={!canPrev} className="grid size-10 place-items-center rounded-full hover:bg-paper disabled:opacity-30" aria-label="Previous step">
             <ChevronLeft className="size-5" />
           </button>
@@ -323,13 +400,21 @@ function BottomBar({
             <ChevronRight className="size-5" />
           </button>
         </div>
+        {!chatOpen && (
+          <button onClick={onAsk} className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-5 font-medium text-paper shadow-lg transition hover:brightness-105">
+            <Sparkles className="size-4" />
+            Ask
+          </button>
+        )}
+        </div>
       </div>
     </div>
   );
 }
 
-function Amounts({ text, template, factor }: { text: string; template: string | null; factor: number }) {
+function Amounts({ text, template, factor, plain = false }: { text: string; template: string | null; factor: number; plain?: boolean }) {
   if (!template) return <>{text}</>;
+  if (plain) return <>{renderTemplate(template, factor).map((s) => s.text).join("")}</>;
   return (
     <>
       {renderTemplate(template, factor).map((seg, i) =>

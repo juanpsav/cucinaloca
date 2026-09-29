@@ -48,7 +48,8 @@ export type Timer = z.infer<typeof Timer>;
 /**
  * Claude's structured reading of a SourceRecipe. Positional (same order and count as the
  * source). Templates are the source text with every amount that scales with the recipe
- * wrapped as [[number]], so scaling can rewrite metric equivalents and in-step amounts too.
+ * wrapped as [[number]] (or [[number|w]] for whole items like eggs), so scaling can rewrite
+ * metric equivalents and in-step amounts too.
  */
 export const Enrichment = z.object({
   servings: z.object({
@@ -57,13 +58,13 @@ export const Enrichment = z.object({
   }),
   ingredients: z.array(
     z.object({
-      template: z.string().describe("The ingredient line with each scalable amount as [[decimal]]"),
+      template: z.string().describe("The ingredient line with each scalable amount as [[decimal]], or [[decimal|w]] for whole items"),
       name: z.string().describe('Short everyday name, e.g. "butter", "yellow onion"'),
     }),
   ),
   steps: z.array(
     z.object({
-      template: z.string().describe("The step text with each scalable ingredient amount as [[decimal]]"),
+      template: z.string().describe("The step text with each scalable ingredient amount as [[decimal]], or [[decimal|w]] for whole items"),
       ingredientIndexes: z.array(z.number()).describe("0-based indexes of ingredients this step uses"),
       timers: z.array(Timer).describe("Timed actions in this step; empty if none"),
     }),
@@ -71,32 +72,35 @@ export const Enrichment = z.object({
 });
 export type Enrichment = z.infer<typeof Enrichment>;
 
-export type Ingredient = {
-  id: string;
-  text: string;
+export const Ingredient = z.object({
+  id: z.string(),
+  text: z.string(),
   /** null until enriched (or if the model's template didn't match the source). */
-  template: string | null;
-  group: string | null;
-  name: string;
-};
+  template: z.string().nullable(),
+  group: z.string().nullable(),
+  name: z.string(),
+});
+export type Ingredient = z.infer<typeof Ingredient>;
 
-export type Step = {
-  id: string;
-  text: string;
-  template: string | null;
-  group: string | null;
-  ingredientIds: string[];
-  timers: Timer[];
-};
+export const Step = z.object({
+  id: z.string(),
+  text: z.string(),
+  template: z.string().nullable(),
+  group: z.string().nullable(),
+  ingredientIds: z.array(z.string()),
+  timers: z.array(Timer),
+});
+export type Step = z.infer<typeof Step>;
 
-/** The working recipe the cook view renders and (from M2) the agent edits. */
-export type Recipe = {
-  title: string;
-  description: string | null;
-  meta: RecipeMeta;
-  times: { prep: number | null; cook: number | null; total: number | null };
-  servings: { amount: number | null; label: string; text: string | null };
-  ingredients: Ingredient[];
-  steps: Step[];
-  enriched: boolean;
-};
+/** The working recipe the cook view renders and the agent edits. */
+export const Recipe = z.object({
+  title: z.string(),
+  description: z.string().nullable(),
+  meta: RecipeMeta,
+  times: z.object({ prep: z.number().nullable(), cook: z.number().nullable(), total: z.number().nullable() }),
+  servings: z.object({ amount: z.number().nullable(), label: z.string(), text: z.string().nullable() }),
+  ingredients: z.array(Ingredient),
+  steps: z.array(Step),
+  enriched: z.boolean(),
+});
+export type Recipe = z.infer<typeof Recipe>;

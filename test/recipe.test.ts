@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyEnrichment, fromImported } from "@/lib/recipe/build";
-import { formatAmount, renderTemplate } from "@/lib/recipe/scale";
+import { formatAmount, mapMarkers, renderTemplate, renderText } from "@/lib/recipe/scale";
 import type { ImportedRecipe } from "@/lib/recipe/types";
 
 const imported: ImportedRecipe = {
@@ -67,6 +67,20 @@ describe("scaling", () => {
   it("keeps the author's numbers at the original size", () => {
     const text = renderTemplate("([[113]] g) and [[1.5]] cups", 1).map((s) => s.text).join("");
     expect(text).toBe("(113 g) and 1½ cups");
+  });
+
+  it("rounds whole items", () => {
+    expect(renderText("[[1|w]] large egg, [[2|w]] yolks, [[0.5]] tsp", 1.25)).toBe("1 large egg, 3 yolks, ⅝ tsp");
+    expect(renderText("[[1|w]] egg", 0.25)).toBe("1 egg");
+  });
+
+  it("collapses a range that rounds to one number", () => {
+    expect(renderText("[[2|w]]-[[3|w]] sprigs", 0.34)).toBe("1 sprigs");
+    expect(renderText("[[2]]-[[3]] cloves", 2)).toBe("4-6 cloves");
+  });
+
+  it("maps marker values", () => {
+    expect(mapMarkers("[[250]] g and [[2|w]] eggs", (n) => n / 1.25)).toBe("[[200]] g and [[1.6|w]] eggs");
   });
 
   it.each([
