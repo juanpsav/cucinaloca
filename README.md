@@ -1,62 +1,118 @@
 # Cucina Loca
 
-**Cook any recipe, your way.** Open a recipe from anywhere in a clean cook view, then scale it, time it and follow it step by step. Nothing is saved: a session lives in your browser tab and disappears when you close it.
+**A chef in your kitchen.** Paste a recipe from any site and cook from a clean page, with a sous-chef you can ask to change it: out of shallots, cooking for six, vegetarian guests, only an air fryer. The recipe rewrites itself to match, and you see exactly what changed.
 
-[cucinaloca.com](https://cucinaloca.com)
+### 👉 Try it at [cucinaloca.com](https://cucinaloca.com)
 
-> v2 is a rebuild in progress. v1 (location-based ingredient suggestions) lives on `main`.
+Paste any recipe link, or put `cucinaloca.com/` in front of a recipe's address, e.g. `cucinaloca.com/https://www.bbcgoodfood.com/recipes/best-spaghetti-bolognese-recipe`. No sign-up. Nothing is saved: close the tab and the session is gone.
+
+![Cook view with the sous-chef's edits shown against the original recipe](docs/desktop.jpg)
+
+<p align="center"><img src="docs/phone.jpg" alt="The same recipe on a phone, with the sous-chef as a bottom sheet" width="560"></p>
+
+## What it does
+
+- **Opens any recipe as a clean cook view.** Ingredients you can tick off, the current step in focus with the ingredients it needs, one-tap timers found in the method, servings scaling, and the screen kept awake.
+- **Changes the recipe when you ask.** "Ask your sous-chef" edits the recipe itself rather than replying with advice you have to apply in your head. Every change shows inline against the original (old text struck through), each reply can be undone, and "Back to the original" is one tap away.
+- **Remembers what matters, nothing else.** Lasting facts like "we're vegetarian" or "no stand mixer" stay in your browser for next time. Recipes and conversations are never stored.
+- **Works where you are.**
+  - On a phone: a share-sheet shortcut (`/shortcut`), or paste or prefix a link.
+  - On a computer: a Chrome side-panel extension (`extension/`) that cooks the page you're on.
+  - When a site blocks automated access: add screenshots or paste the text.
+- **Keeps the good ones.** "Save to Mela" exports your adapted version, photo included, as a [`.melarecipe`](https://mela.recipes/fileformat/) file for the [Mela](https://mela.recipes) recipe app.
 
 ## How it works
 
-- **Open a recipe:** paste a link, put `cucinaloca.com/` in front of any recipe URL, use the iPhone share-sheet shortcut (`/shortcut`), or add screenshots / paste the text when a site doesn't allow automated access.
-- **Chrome extension** (`extension/`): a Manifest V3 side panel that frames the app and hands it the recipe read from the page you're on, so it also works on sites that block server-side fetching. It uses `activeTab` only (no standing access to any site); the app accepts the page via `postMessage` only from an extension parent, and `frame-ancestors` limits who can frame it.
-- **Import:** schema.org JSON-LD first. If a page has no structured data, or you send screenshots or text, Claude extracts the recipe verbatim with structured outputs (vision for screenshots).
-- **Enrich:** Claude reads the recipe once and returns *templates*: each line with only the amounts that should scale marked (`[[1.5]] cups ([[200]] g) flour`, but not the `14-oz` in `1 (14-oz) can`). It also links each step to its ingredients and finds the timers. Templates are checked word-for-word against the source, so the model can't quietly change the recipe.
-- **Cook:** step focus shows exactly what each step needs, plus one-tap timers and screen wake lock.
-- **Change it:** tell the assistant what you have, what you don't, who you're cooking for. A Claude agent (tool use, streamed) edits the recipe through typed operations: `edit_recipe` (atomic batches of ingredient/step updates; the same pure function validates on the server and applies in the browser), `set_servings` and `remember_preference`. Changes show inline against the original, and each reply can be undone as a unit.
-- **Keep it:** "Save to Mela" exports your version (current scale, edits, groups, a note of what changed, the photo) as a [`.melarecipe`](https://mela.recipes/fileformat/) file: the share sheet on phones, a download on computers.
+```mermaid
+flowchart LR
+  A[Recipe link, screenshot,<br/>pasted text or extension] --> B["/api/import<br/>JSON-LD first,<br/>Claude extraction as fallback"]
+  B --> C["/api/enrich<br/>Claude marks what scales,<br/>links steps, finds timers"]
+  C --> D[Cook view<br/>state in sessionStorage]
+  D <--> E["/api/chat<br/>Claude agent with tools,<br/>streamed as NDJSON"]
+  D --> F["/api/export/mela"]
+```
+
+**Import.** The server fetches the page (with SSRF protection: private and internal addresses are refused at connect time, including after redirects) and reads its schema.org JSON-LD. Pages without structured data, screenshots and pasted text go through Claude with structured outputs, which copies the recipe verbatim. Sites that refuse automated access (some answer HTTP 402) are respected, not worked around. The cook is offered screenshots or the extension instead, which read the page from their own browser.
+
+**Enrichment.** Claude reads the recipe once and returns a template for every line, with only the amounts that should scale marked: `[[1.5]] cups ([[200]] g) flour` but `[[1]] (14-oz) can tomatoes`. Scaling then updates metric equivalents and amounts written inside steps too, and eggs round to whole numbers. Each template is checked word for word against the source, so the model can't quietly change the recipe.
+
+**The sous-chef.** A Claude agent runs a streaming tool loop with three strict tools:
+- `edit_recipe`: an atomic batch of typed operations on ingredients and steps.
+- `set_servings`
+- `remember_preference`
+
+The same pure `applyChange()` validates each edit on the server and applies it in the browser, so both always agree. The server is stateless: every request carries the recipe and conversation from the tab.
+
+**Chrome extension.** A Manifest V3 side panel frames the app and passes it the page the cook is looking at. It uses only `activeTab`, so it can read a page only when you click its icon. The app accepts that page only from an extension parent frame, and `frame-ancestors` limits who can frame it.
 
 ## Evals
 
-`evals/chat/` tests the sous-chef on 36 requests across 6 recipes written for the eval (swaps, missing ingredients, diets and allergies with hidden sources, scaling, equipment, questions that must not touch the recipe, seasonality by hemisphere, French, and follow-ups). The runner calls the real agent and applies its edits exactly as the browser does, then scores four things:
+The sous-chef has its own test suite in `evals/chat/`: 36 requests across 6 recipes written for it. They cover:
+- swaps and missing ingredients
+- diets and allergies with hidden sources (shrimp paste in curry paste, wheat in stock cubes)
+- scaling and equipment
+- questions that must leave the recipe alone
+- seasonality by hemisphere
+- French
+- follow-ups that depend on earlier turns
 
-- **Correct edits** (code): the final recipe really lost the pancetta, kept the right scale, left questions alone, saved or didn't save a preference.
+The runner calls the real agent and applies its edits exactly as the browser does, then scores four things:
+
+- **Correct edits** (code): the pancetta really is gone from every line, the scale is right, questions didn't touch the recipe, one-off situations weren't saved as preferences.
 - **Style rules** (code): no markdown, no "I've swapped…", no sign-offs, no internal ids, no leaked working notes, length limits.
-- **Chef approves** and **sounds human** (Claude Sonnet 5.5 as judge, one property per call).
+- **Chef approves** and **Sounds human**: Claude Sonnet 5.5 as judge, one property per call, with the candidate's text treated as data.
 
-The graders are checked against empty, evasive and wrong answers (`npm run eval:chat -- --selftest`). The first baseline caught the model's working notes leaking into replies ("Or just remove it? They didn't say what they have…") in 13 of 72 runs. Fixing the streaming took that to 0 and style from 71% to 86%.
+Before trusting the judges, the suite checks that they fail empty, evasive and confidently wrong answers (`npm run eval:chat -- --selftest`).
 
-| 36 cases × 2 runs | Correct | Chef approves | Style | Sounds human |
+The first baseline found a real bug: text the model wrote before calling a tool, its working notes ("Or just remove it? They didn't say what they have…"), was reaching the cook in 13 of 72 runs. Only sending the text of the turn that ends the reply fixed it:
+
+| 36 cases × 2 runs | Correct edits | Chef approves | Style rules | Sounds human |
 |---|---|---|---|---|
 | Baseline | 100% | 79% | 71% | 60% |
 | Hide pre-tool text | 100% | 79% | 86% | 62% |
 
-```bash
-npm run eval:chat -- --reps 2          # about $1.60 and 3 minutes
+A full run costs about $1.60 and takes 3 minutes. It runs on demand (`npm run eval:chat -- --reps 2`, or Actions → "Eval sous-chef chat").
+
+## Built with
+
+- **App:** Next.js 16 (App Router, route handlers, `proxy.ts`), React 19, Tailwind CSS 4, Zod
+- **AI:** Claude API with `claude-opus-5-5`, using:
+  - structured outputs and vision
+  - the SDK's streaming tool runner with strict Zod tools
+  - prompt caching
+  - server-side refusal fallback
+- **Around it:** Upstash rate limiting, Vercel Analytics (page views only, no query strings), Vitest, and a Chrome MV3 extension
+
+## Project layout
+
+```
+src/app/            pages (home, /cook, /shortcut, /extension) and API routes
+src/components/     cook view, chat panel, Save to Mela, extension host
+src/lib/recipe/     JSON-LD parsing, Claude import and enrichment, scaling, edits, diffs
+src/lib/chat/       the sous-chef agent and its streaming protocol
+src/lib/fetch-page  SSRF-safe page and image fetching
+src/proxy.ts        cucinaloca.com/<recipe-url> → /cook?url=…
+extension/          Chrome side-panel extension
+evals/chat/         sous-chef eval: cases, recipes, graders, runner
+test/               unit tests (Vitest)
 ```
 
-On GitHub it runs on demand (Actions → Eval sous-chef chat), with `ANTHROPIC_API_KEY` set as a repository secret.
-
-## Stack
-
-Next.js 16 · React 19 · Tailwind 4 · Claude API (`claude-opus-5-5`: structured outputs, vision, streaming tool runner with strict Zod tools, prompt caching, server-side refusal fallback) · Zod · Upstash rate limiting · Vitest
-
-## Development
+## Run it locally
 
 ```bash
 cp .env.example .env.local   # add ANTHROPIC_API_KEY
 npm install
-npm run dev
+npm run dev                  # http://localhost:3000
 npm test
 ```
 
 To try the extension, load `extension/` unpacked at `chrome://extensions` (Developer mode). An unpacked copy talks to `http://localhost:3000`; a Web Store install talks to cucinaloca.com. `npm run ext:zip` builds the upload bundle.
 
-## Roadmap
+## What's next
 
-- [x] M0/M1: rebuild, cook view, import from link, screenshots or text
-- [x] M2: chat agent that edits the recipe (swaps, scaling, equipment) with typed patches and diffs
-- [x] M3: iOS Shortcut and Chrome side-panel extension (Web Store listing pending)
-- [x] M4: Save to Mela
-- [x] M5: evals
-- [ ] M6: hands-free voice
+- Hands-free voice mode for cooking with messy hands.
+- The Chrome Web Store listing for the extension.
+- Fixes the evals point to:
+  - letting the sous-chef rename a recipe it changed
+  - showing it the original recipe so it can restore earlier amounts
+  - fewer replies that open by restating the change
