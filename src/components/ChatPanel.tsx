@@ -68,12 +68,9 @@ export function ChatPanel({
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="size-5 text-accent" />
-            <div className="leading-tight">
-              <p className="font-medium">Tweak it</p>
-              <p className="text-xs text-muted">Ask Loca, your sous-chef</p>
-            </div>
+          <div className="flex items-center gap-2 font-medium">
+            <Sparkles className="size-4 text-accent" />
+            Ask your sous-chef
           </div>
           <div className="flex items-center gap-1">
             {session.chat.length > 0 && (

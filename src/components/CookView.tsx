@@ -412,13 +412,10 @@ function BottomBar({
         {!chatOpen && (
           <button
             onClick={onAsk}
-            className="inline-flex h-12 shrink-0 items-center gap-2.5 rounded-full bg-accent pr-5 pl-4 whitespace-nowrap text-paper shadow-lg transition hover:brightness-105"
+            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-accent pr-5 pl-4 font-medium whitespace-nowrap text-paper shadow-lg transition hover:brightness-105"
           >
-            <Sparkles className="size-5" />
-            <span className="flex flex-col items-start leading-tight">
-              <span className="font-medium">Tweak it</span>
-              <span className="text-[11px] opacity-85">Ask Loca, your sous-chef</span>
-            </span>
+            <Sparkles className="size-4" />
+            Ask your sous-chef
           </button>
         )}
         </div>
