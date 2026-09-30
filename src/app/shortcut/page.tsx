@@ -23,14 +23,13 @@ export default function ShortcutPage() {
               editor, set it to receive <strong className="text-ink">URLs</strong>.
             </p>
           </StepItem>
-          <StepItem title="Add the action “URL Encode”">It encodes the Shortcut Input (the recipe&apos;s address).</StepItem>
           <StepItem title="Add the action “Text”">
             <p>
-              Type <Code>https://cucinaloca.com/cook?url=</Code> and then insert the <strong className="text-ink">URL Encoded Text</strong> variable right after
-              it, with no space.
+              Type <Code>https://cucinaloca.com/</Code> and then insert the <strong className="text-ink">Shortcut Input</strong> variable right after it, with
+              no space.
             </p>
           </StepItem>
-          <StepItem title="Add the action “Open URLs”">It opens the Text from the previous step.</StepItem>
+          <StepItem title="Add the action “Open URLs”">It opens the Text from the previous step. That&apos;s it.</StepItem>
         </Steps>
       </section>
 
