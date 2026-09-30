@@ -1,9 +1,13 @@
 import { Logo } from "@/components/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function InfoPage({ eyebrow, title, intro, children }: { eyebrow: string; title: string; intro: string; children: React.ReactNode }) {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-24">
-      <Logo />
+      <div className="flex items-center justify-between">
+        <Logo />
+        <ThemeToggle />
+      </div>
       <p className="mt-12 text-sm font-medium tracking-[0.14em] text-muted uppercase">{eyebrow}</p>
       <h1 className="mt-2 font-serif text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">{title}</h1>
       <p className="mt-4 text-lg text-muted">{intro}</p>

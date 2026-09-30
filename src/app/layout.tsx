@@ -19,9 +19,16 @@ export const viewport: Viewport = {
   ],
 };
 
+// Apply a saved light/dark choice before first paint, so the page never flashes the wrong theme.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("cucinaloca:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${playfair.variable} h-full antialiased`}>
+    // The theme script sets data-theme before React hydrates, hence suppressHydrationWarning.
+    <html lang="en" className={`${geist.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         {children}
         <SiteAnalytics />

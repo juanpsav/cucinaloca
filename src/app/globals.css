@@ -11,10 +11,12 @@
   --brand-sage: #5a6b50;
   --brand-orange: #e85a2b;
   --focus: #fff4d6;
+  color-scheme: light;
 }
 
+/* Follows the device unless the cook picked a theme (html[data-theme], see ThemeToggle). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #15120f;
     --surface: #1e1a16;
     --ink: #f3ede4;
@@ -25,7 +27,22 @@
     --brand-sage: #9dae92;
     --brand-orange: #f0916b;
     --focus: #2b2519;
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --paper: #15120f;
+  --surface: #1e1a16;
+  --ink: #f3ede4;
+  --muted: #a0958a;
+  --line: #342d27;
+  --accent: #f0916b;
+  --accent-soft: #3a2119;
+  --brand-sage: #9dae92;
+  --brand-orange: #f0916b;
+  --focus: #2b2519;
+  color-scheme: dark;
 }
 
 @theme inline {

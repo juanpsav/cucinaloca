@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, Sparkles, Sun, SunDim, Timer, Undo2, X } from "lucide-react";
+import { Check, ChevronLeft, Coffee, ChevronRight, Clock, ExternalLink, LoaderCircle, Minus, Plus, RotateCcw, Sparkles, Timer, Undo2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Logo } from "@/components/Logo";
 import { SaveToMela } from "@/components/SaveToMela";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { SessionUpdater } from "@/hooks/useChat";
 import { formatClock, useTimers } from "@/hooks/useTimers";
 import { useWakeLock } from "@/hooks/useWakeLock";
@@ -56,13 +57,14 @@ export function CookView({ session, update, enrichState }: { session: CookSessio
           <Logo className="text-xl" />
           <div className="flex items-center gap-1">
             <SaveToMela session={session} />
+            <ThemeToggle />
             {wake.supported && (
               <button
                 onClick={wake.toggle}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition ${wake.active ? "bg-accent-soft text-accent" : "text-muted hover:text-ink"}`}
                 title="Keep the screen on while you cook"
               >
-                {wake.active ? <Sun className="size-4" /> : <SunDim className="size-4" />}
+                <Coffee className="size-4" />
                 <span className="hidden sm:inline">{wake.active ? "Screen stays on" : "Keep screen on"}</span>
               </button>
             )}
